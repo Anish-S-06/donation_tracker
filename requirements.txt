@@ -1,0 +1,17 @@
+Flask
+Flask-SQLAlchemy
+Flask-Migrate
+Flask-Login
+Flask-Mail
+Flask-WTF
+APScheduler
+bcrypt
+Pillow
+reportlab
+twilio
+google-auth
+google-auth-oauthlib
+PyMySQL
+cryptography
+python-dotenv
+pytest
