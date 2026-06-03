@@ -1,24 +1,51 @@
 from datetime import datetime
 from app import db
 
-class User(db.Model):
+import bcrypt
+from flask_login import UserMixin
+
+class User(UserMixin, db.Model):
     __tablename__ = 'users'
     
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     role = db.Column(db.Enum('donor', 'receiver', 'admin', name='user_roles'), nullable=False)
-    is_verified = db.Column(db.Boolean, default=False)
+    is_verified = db.Column(db.Boolean, default=False)  # Admin verification status for Donors
+    phone_number = db.Column(db.String(20), nullable=True)
+    is_email_verified = db.Column(db.Boolean, default=False)
+    is_phone_verified = db.Column(db.Boolean, default=False)
+    is_premium_donor = db.Column(db.Boolean, default=False)
+    verification_status = db.Column(db.Enum('pending', 'approved', 'rejected', name='verification_statuses'), default='pending',nullable=False)
+    is_banned = db.Column(db.Boolean,default=False)
     trust_score = db.Column(db.Integer, default=0)
     points_balance = db.Column(db.Integer, default=0)
     badge_level = db.Column(db.Enum('None', 'Bronze', 'Silver', 'Gold', 'Platinum', name='badge_levels'), default='None')
     profile_photo = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
     resources = db.relationship('Resource', backref='donor', lazy=True)
     requests = db.relationship('Request', backref='receiver', lazy=True)
     points_transactions = db.relationship('PointsTransaction', backref='user', lazy=True)
+
+    def set_password(self, password):
+        salt = bcrypt.gensalt()
+        hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
+        self.password_hash = hashed.decode('utf-8')
+
+    def check_password(self, password):
+        if not self.password_hash:
+            return False
+        try:
+            return bcrypt.checkpw(password.encode('utf-8'), self.password_hash.encode('utf-8'))
+        except Exception:
+            return False
+
+    @property
+    def is_active(self):
+        return True
+    def is_approved(self):
+        return self.verification_status =='approved'
 
 class Resource(db.Model):
     __tablename__ = 'resources'

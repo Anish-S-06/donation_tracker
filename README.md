@@ -12,3 +12,7 @@ This is the main repository for the Donation Tracker group project.
 - Auth & Admin
 - Search, Maps & Request System
 - Frontend, Notifications & Gamification
+
+# to run
+run.py          -> Normal local development
+run_tunnel.py   -> Optional ngrok testing

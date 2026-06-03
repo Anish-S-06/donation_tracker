@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% block title %}My Profile - Donation Tracker{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <!-- Left Column: Photo & Quick Status -->
+    <div class="col-md-4 mb-4">
+        <div class="card premium-card border-0 text-center p-4">
+            <div class="card-body">
+                <!-- Profile Image -->
+                <div class="mb-4 d-inline-block position-relative">
+                    {% if current_user.profile_photo %}
+                        <img src="{{ url_for('static', filename=current_user.profile_photo) }}" alt="Profile Photo" class="rounded-circle shadow-sm border border-4 border-white" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                        <div class="d-flex justify-content-center align-items-center bg-primary text-white rounded-circle shadow-sm border border-4 border-white mx-auto" style="width: 150px; height: 150px; font-size: 4rem; font-weight: 700;">
+                            {{ current_user.email[0].upper() }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <h4 class="fw-bold mb-1">{{ current_user.email }}</h4>
+                <div class="mb-3">
+                    <span class="badge bg-primary badge-role text-capitalize">{{ current_user.role }}</span>
+                    {% if current_user.is_premium_donor %}
+                        <span class="badge badge-premium badge-role">Premium Donor</span>
+                    {% endif %}
+                </div>
+                
+                <hr class="my-4">
+                
+                <!-- Upload Form -->
+                <h6 class="fw-bold text-start mb-3">Upload Profile Photo</h6>
+                <form action="{{ url_for('profile_routes.upload_photo') }}" method="POST" enctype="multipart/form-data">
+                    <div class="mb-3 text-start">
+                        <input class="form-control form-control-sm rounded-3" type="file" name="profile_photo" accept="image/*" required>
+                    </div>
+                    <button type="submit" class="btn btn-gradient-secondary btn-sm w-100 py-2 rounded-3">Upload & Save</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Column: Verification & Features -->
+    <div class="col-md-8">
+        <!-- Verification Card -->
+        <div class="card premium-card border-0 p-4 mb-4">
+            <div class="card-body">
+                <h5 class="fw-bold mb-4 text-gradient">Verification Status</h5>
+                
+                <div class="row text-center text-sm-start">
+                    <div class="col-sm-4 mb-3">
+                        <h6 class="text-muted mb-2">Email Verification</h6>
+                        {% if current_user.is_email_verified %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-3">Verified</span>
+                        {% else %}
+                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-2 rounded-3">Pending Link</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-sm-4 mb-3">
+                        <h6 class="text-muted mb-2">Mobile Verification</h6>
+                        {% if current_user.is_phone_verified %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-3">OTP Verified</span>
+                        {% else %}
+                            <a href="{{ url_for('auth_routes.verify_email_otp') }}"
+                                         class="btn btn-outline-warning btn-sm px-3 rounded-3 py-1">Verify Email</a>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-sm-4 mb-3">
+                        <h6 class="text-muted mb-2">Admin Approval</h6>
+                        {% if current_user.role == 'donor' %}
+                            {% if current_user.is_verified %}
+                                <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-3">Approved Donor</span>
+                            {% else %}
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-3">Pending Admin</span>
+                                <div class="form-text text-muted mt-1" style="font-size: 0.75rem;">Admins must verify donors before listing.</div>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge bg-light text-muted px-3 py-2 rounded-3">Not Required</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Gamification & Points Card -->
+        <div class="card premium-card border-0 p-4 mb-4">
+            <div class="card-body">
+                <h5 class="fw-bold mb-4 text-gradient">Gamification & Rewards</h5>
+                <div class="row">
+                    <div class="col-sm-6 mb-3">
+                        <div class="p-3 bg-light rounded-4 border">
+                            <span class="text-muted d-block mb-1">Points Balance</span>
+                            <span class="fs-2 fw-bold text-primary">{{ current_user.points_balance }}</span>
+                            <span class="text-muted ms-1">Points</span>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 mb-3">
+                        <div class="p-3 bg-light rounded-4 border">
+                            <span class="text-muted d-block mb-1">Badge Rank</span>
+                            <span class="fs-2 fw-bold text-success">
+                                {% if current_user.badge_level == 'None' %}
+                                    Standard
+                                {% else %}
+                                    {{ current_user.badge_level }}
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Freemium Listing Upgrade Logic -->
+        {% if current_user.role == 'donor' %}
+            <div class="card premium-card border-0 p-4">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-3 text-gradient">Donor Tier Limits</h5>
+                    
+                    {% if current_user.is_premium_donor %}
+                        <div class="p-3 bg-success-subtle text-success rounded-4 border border-success-subtle">
+                            <h6 class="fw-bold mb-1">Unlimited Premium Donor Plan Active</h6>
+                            <p class="mb-0">You can create unlimited resource listings, and highlight them as featured Premium posts.</p>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-4">You are on the Standard Free tier. You can list up to <strong>5 active resources</strong> at a time.</p>
+                        <form action="{{ url_for('auth_routes.upgrade_premium') }}" method="POST">
+                            <button type="submit" class="btn btn-gradient-primary px-4 py-2.5 rounded-3 fw-semibold">Upgrade to Premium Plan</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

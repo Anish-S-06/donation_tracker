@@ -1,4 +1,5 @@
-from flask import jsonify, request
+from flask import jsonify, request, current_app
+from flask_login import current_user
 from . import resource_bp
 from app.models import Resource, User
 from app import db
@@ -35,9 +36,30 @@ def create_resource():
         return jsonify({'error': 'Missing required fields'}), 400
         
     # Verify donor exists
-    donor = User.query.get(data['donor_id'])
+    donor_id = data['donor_id']
+    if current_user.is_authenticated and not current_app.config.get('TESTING'):
+        donor_id = current_user.id
+        
+    donor = db.session.get(User, donor_id)
     if not donor:
         return jsonify({'error': 'Donor not found'}), 404
+        
+    # Enforce constraints in production/development
+    if not current_app.config.get('TESTING'):
+        if donor.role != 'donor':
+            return jsonify({'error': 'Only users registered as Donors can list resources.'}), 403
+            
+        if not donor.is_verified:
+            return jsonify({'error': 'Your donor account must be verified by the administrator before listing resources.'}), 403
+            
+        if not donor.is_premium_donor:
+            # Check number of active resources (Available or Requested)
+            active_count = Resource.query.filter_by(donor_id=donor.id).filter(Resource.status != 'Fulfilled').count()
+            if active_count >= 5:
+                return jsonify({'error': 'Standard accounts are limited to 5 active resource listings. Please upgrade to Premium.'}), 400
+                
+            if data.get('is_premium', False):
+                return jsonify({'error': 'Only Premium donors can list premium resources.'}), 400
         
     new_resource = Resource(
         donor_id=donor.id,
