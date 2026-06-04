@@ -26,7 +26,7 @@ def seed_db():
                 role='admin',
                 is_email_verified=True,
                 is_phone_verified=True,
-                is_verified=True
+                
             )
             admin_user.set_password('adminpass')
             db.session.add(admin_user)
@@ -40,7 +40,6 @@ def seed_db():
                 role='donor',
                 is_email_verified=True,
                 is_phone_verified=True,
-                is_verified=True
             )
             donor_user.set_password('donorpass')
             db.session.add(donor_user)
@@ -54,7 +53,7 @@ def seed_db():
                 role='receiver',
                 is_email_verified=True,
                 is_phone_verified=True,
-                is_verified=True
+                
             )
             receiver_user.set_password('receiverpass')
             db.session.add(receiver_user)

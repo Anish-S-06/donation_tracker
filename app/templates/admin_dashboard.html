@@ -20,6 +20,7 @@
 {% endblock %}
 
 {% block content %}
+
 <div class="row mb-4 align-items-center">
     <div class="col-md-8">
         <h2 class="fw-bold text-gradient mb-1">Admin Control Center</h2>
@@ -27,262 +28,244 @@
     </div>
 </div>
 
-<!-- KPI Metrics Grid -->
+<!-- KPI Metrics -->
 <div class="row mb-5">
     <div class="col-md-3 col-sm-6 mb-4">
         <div class="card kpi-card border-0 shadow-sm p-3 bg-white text-dark">
             <div class="card-body">
-                <span class="text-muted d-block text-uppercase font-monospace fs-7 mb-2">Total Platform Users</span>
-                <h3 class="fw-bold m-0 text-primary">{{ kpis.total_users }}</h3>
+                <span class="text-muted text-uppercase fs-7">Total Users</span>
+                <h3 class="fw-bold text-primary">{{ kpis.total_users }}</h3>
             </div>
         </div>
     </div>
-    
+
     <div class="col-md-3 col-sm-6 mb-4">
         <div class="card kpi-card border-0 shadow-sm p-3 bg-white text-dark">
             <div class="card-body">
-                <span class="text-muted d-block text-uppercase font-monospace fs-7 mb-2">Resource Listings</span>
-                <h3 class="fw-bold m-0 text-success">{{ kpis.total_resources }}</h3>
+                <span class="text-muted text-uppercase fs-7">Resources</span>
+                <h3 class="fw-bold text-success">{{ kpis.total_resources }}</h3>
             </div>
         </div>
     </div>
-    
+
     <div class="col-md-3 col-sm-6 mb-4">
         <div class="card kpi-card border-0 shadow-sm p-3 bg-white text-dark">
             <div class="card-body">
-                <span class="text-muted d-block text-uppercase font-monospace fs-7 mb-2">Pending Requests</span>
-                <h3 class="fw-bold m-0 text-warning">{{ kpis.pending_requests }}</h3>
+                <span class="text-muted text-uppercase fs-7">Pending Requests</span>
+                <h3 class="fw-bold text-warning">{{ kpis.pending_requests }}</h3>
             </div>
         </div>
     </div>
-    
+
     <div class="col-md-3 col-sm-6 mb-4">
         <div class="card kpi-card border-0 shadow-sm p-3 bg-white text-dark">
             <div class="card-body">
-                <span class="text-muted d-block text-uppercase font-monospace fs-7 mb-2">Fulfilled Donations</span>
-                <h3 class="fw-bold m-0 text-info">{{ kpis.fulfilled_donations }}</h3>
+                <span class="text-muted text-uppercase fs-7">Fulfilled</span>
+                <h3 class="fw-bold text-info">{{ kpis.fulfilled_donations }}</h3>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Tabbed Sections: Users vs Analytics -->
+<!-- Tabs -->
 <div class="card premium-card border-0 p-4">
     <div class="card-body">
-        <ul class="nav nav-pills mb-4" id="adminTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active px-4 py-2 fw-semibold rounded-3" id="users-tab" data-bs-toggle="pill" data-bs-target="#users-panel" type="button" role="tab" aria-controls="users-panel" aria-selected="true">
+
+        <ul class="nav nav-pills mb-4">
+            <li class="nav-item">
+                <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#users-panel">
                     User Management
                 </button>
             </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link px-4 py-2 fw-semibold rounded-3 ms-2" id="analytics-tab" data-bs-toggle="pill" data-bs-target="#analytics-panel" type="button" role="tab" aria-controls="analytics-panel" aria-selected="false">
-                    Analytics Charts
+            <li class="nav-item ms-2">
+                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#analytics-panel">
+                    Analytics
                 </button>
             </li>
         </ul>
-        
-        <div class="tab-content" id="adminTabsContent">
-            <!-- Panel 1: User Management -->
-            <div class="tab-pane fade show active" id="users-panel" role="tabpanel" aria-labelledby="users-tab">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>ID</th>
-                                <th>Email</th>
-                                <th>Role</th>
-                                <th>Donor Verification</th>
-                                <th>Ban Status</th>
-                                <th class="text-end">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for u in users %}
-                            <tr>
-                                <td>{{ u.id }}</td>
-                                <td>
-                                    <div class="fw-medium">{{ u.email }}</div>
-                                </td>
-                                <td>
-                                    <span class="badge bg-secondary text-capitalize">{{ u.role }}</span>
-                                    {% if u.is_premium_donor %}
-                                        <span class="badge badge-premium">Premium</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if u.role == 'donor' %}
-                                        {% if u.is_verified %}
-                                            <span class="badge bg-success-subtle text-success border border-success-subtle">Verified Donor</span>
-                                        {% else %}
-                                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle">Unverified</span>
-                                        {% endif %}
-                                    {% else %}
-                                        <span class="text-muted fs-7">Not Required</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if u.is_banned %}
-                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Banned</span>
-                                    {% else %}
-                                        <span class="badge bg-success-subtle text-success border border-success-subtle">Active</span>
-                                    {% endif %}
-                                </td>
-                                <td class="text-end">
-                                    <div class="d-inline-flex gap-2">
-                                       <!-- Verify User -->
-                                    {% if not u.is_verified %}
-                                    <form action="{{ url_for('admin_routes.verify_user', user_id=u.id) }}" method="POST">
-                                      <button type="submit" class="btn btn-sm btn-outline-success rounded-3">Verify</button>
-                                    </form>
 
-                                    <form action="{{ url_for('admin_routes.reject_user', user_id=u.id) }}" method="POST">
-                                      <button type="submit" class="btn btn-sm btn-outline-warning rounded-3">Reject</button>
-                                    </form>
-                                    {% endif %}           
-                                        
-                                        <!-- Ban / Unban actions -->
-                                        {% if u.id != current_user.id %}
-                                            {% if u.is_banned %}
-                                            <form action="{{ url_for('admin_routes.unban_user', user_id=u.id) }}" method="POST">
-                                                <button type="submit" class="btn btn-sm btn-outline-success rounded-3">Unban</button>
+        <div class="tab-content">
+
+            <!-- USERS PANEL -->
+            <div class="tab-pane fade show active" id="users-panel">
+
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Ban</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                    {% for u in users %}
+                        <tr>
+                            <td>{{ u.id }}</td>
+
+                            <td>{{ u.email }}</td>
+
+                            <td>
+                                <span class="badge bg-secondary">{{ u.role }}</span>
+                                {% if u.is_premium_donor %}
+                                    <span class="badge bg-dark">Premium</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- CLEAN STATUS -->
+                            <td>
+                                {% if u.role == 'donor' %}
+
+                                    {% if u.verification_status == 'approved' %}
+                                        <span class="badge bg-success">Verified</span>
+
+                                    {% elif u.verification_status == 'rejected' %}
+                                        <span class="badge bg-danger">Rejected</span>
+
+                                    {% elif u.is_email_verified == False %}
+                                        <span class="badge bg-secondary">Email Not Verified</span>
+
+                                    {% else %}
+                                        <span class="badge bg-warning">Pending Admin</span>
+                                    {% endif %}
+
+                                {% else %}
+                                    <span class="text-muted">Not Required</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- BAN STATUS -->
+                            <td>
+                                {% if u.is_banned %}
+                                    <span class="badge bg-danger">Banned</span>
+                                {% else %}
+                                    <span class="badge bg-success">Active</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- ACTIONS -->
+                            <td class="text-end">
+
+                                <div class="d-flex gap-2">
+
+                                    <!-- VERIFY / REJECT -->
+                                    {% if u.role != 'admin'
+                                          and u.is_email_verified == True
+                                          and u.verification_status == 'pending' %}
+
+                                        <form method="POST" action="{{ url_for('admin_routes.verify_user', user_id=u.id) }}">
+                                            <button class="btn btn-success btn-sm">Verify</button>
+                                        </form>
+
+                                        <form method="POST" action="{{ url_for('admin_routes.reject_user', user_id=u.id) }}">
+                                            <button class="btn btn-warning btn-sm">Reject</button>
+                                        </form>
+
+                                    {% endif %}
+
+                                    <!-- BAN / UNBAN -->
+                                    {% if u.role != 'admin' and u.id != current_user.id %}
+
+                                        {% if u.is_banned %}
+                                            <form method="POST" action="{{ url_for('admin_routes.unban_user', user_id=u.id) }}">
+                                                <button class="btn btn-success btn-sm">Unban</button>
                                             </form>
-                                            {% else %}
-                                            <form action="{{ url_for('admin_routes.ban_user', user_id=u.id) }}" method="POST">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-3">Ban</button>
-                                            </form>
-                                            {% endif %}
                                         {% else %}
-                                            <span class="text-muted fs-7 me-2">Your Account</span>
+                                            <form method="POST" action="{{ url_for('admin_routes.ban_user', user_id=u.id) }}">
+                                                <button class="btn btn-danger btn-sm">Ban</button>
+                                            </form>
                                         {% endif %}
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+
+                                    {% else %}
+                                        <span class="text-muted">Your Account</span>
+                                    {% endif %}
+
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+
             </div>
-            
-            <!-- Panel 2: Analytics Charts -->
-            <div class="tab-pane fade" id="analytics-panel" role="tabpanel" aria-labelledby="analytics-tab">
+
+            <!-- ANALYTICS PANEL -->
+            <div class="tab-pane fade" id="analytics-panel">
                 <div class="row">
-                    <!-- User Distribution Chart -->
-                    <div class="col-md-4 mb-4">
-                        <div class="p-3 bg-light rounded-4 border">
-                            <h6 class="fw-bold mb-3 text-center">User Distribution</h6>
-                            <div class="chart-container">
-                                <canvas id="usersChart"></canvas>
-                            </div>
-                        </div>
+
+                    <div class="col-md-4">
+                        <h6 class="text-center">Users</h6>
+                        <canvas id="usersChart"></canvas>
                     </div>
-                    
-                    <!-- Resource Status Chart -->
-                    <div class="col-md-4 mb-4">
-                        <div class="p-3 bg-light rounded-4 border">
-                            <h6 class="fw-bold mb-3 text-center">Resource Listings Status</h6>
-                            <div class="chart-container">
-                                <canvas id="resourcesChart"></canvas>
-                            </div>
-                        </div>
+
+                    <div class="col-md-4">
+                        <h6 class="text-center">Resources</h6>
+                        <canvas id="resourcesChart"></canvas>
                     </div>
-                    
-                    <!-- Resource Categories Chart -->
-                    <div class="col-md-4 mb-4">
-                        <div class="p-3 bg-light rounded-4 border">
-                            <h6 class="fw-bold mb-3 text-center">Listings by Category</h6>
-                            <div class="chart-container">
-                                <canvas id="categoriesChart"></canvas>
-                            </div>
-                        </div>
+
+                    <div class="col-md-4">
+                        <h6 class="text-center">Categories</h6>
+                        <canvas id="categoriesChart"></canvas>
                     </div>
+
                 </div>
             </div>
+
         </div>
     </div>
 </div>
+
 {% endblock %}
 
 {% block extra_js %}
-<!-- Chart.js CDN -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    const tabEl = document.querySelector('#analytics-tab');
-    
-    // Trigger load when analytics tab is displayed to ensure canvases render with correct sizes
-    tabEl.addEventListener('shown.bs.tab', function (event) {
-        loadAnalyticsData();
-    }, { once: true }); // trigger only on the first click
-    
+
     async function loadAnalyticsData() {
-        try {
-            const response = await fetch("{{ url_for('admin_routes.analytics_data') }}");
-            if (!response.ok) throw new Error("Failed to load analytics data.");
-            const data = await response.json();
-            
-            // Render Users Chart (Doughnut)
-            new Chart(document.getElementById('usersChart'), {
-                type: 'doughnut',
-                data: {
-                    labels: data.users.labels,
-                    datasets: [{
-                        data: data.users.data,
-                        backgroundColor: ['#4f46e5', '#06b6d4', '#f59e0b'],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
-            });
-            
-            // Render Resources Chart (Bar)
-            new Chart(document.getElementById('resourcesChart'), {
-                type: 'bar',
-                data: {
-                    labels: data.resources.labels,
-                    datasets: [{
-                        label: 'Listings',
-                        data: data.resources.data,
-                        backgroundColor: ['#3b82f6', '#f59e0b', '#10b981'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { stepSize: 1 }
-                        }
-                    }
-                }
-            });
-            
-            // Render Categories Chart (Pie)
-            new Chart(document.getElementById('categoriesChart'), {
-                type: 'pie',
-                data: {
-                    labels: data.categories.labels,
-                    datasets: [{
-                        data: data.categories.data,
-                        backgroundColor: ['#ec4899', '#8b5cf6', '#ef4444', '#10b981', '#f59e0b', '#3b82f6'],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
-            });
-            
-        } catch (error) {
-            console.error(error);
-        }
+
+        const res = await fetch("{{ url_for('admin_routes.analytics_data') }}");
+        const data = await res.json();
+
+        new Chart(document.getElementById('usersChart'), {
+            type: 'doughnut',
+            data: {
+                labels: data.users.labels,
+                datasets: [{
+                    data: data.users.data
+                }]
+            }
+        });
+
+        new Chart(document.getElementById('resourcesChart'), {
+            type: 'bar',
+            data: {
+                labels: data.resources.labels,
+                datasets: [{
+                    data: data.resources.data
+                }]
+            }
+        });
+
+        new Chart(document.getElementById('categoriesChart'), {
+            type: 'pie',
+            data: {
+                labels: data.categories.labels,
+                datasets: [{
+                    data: data.categories.data
+                }]
+            }
+        });
     }
+
+    document.querySelector('#analytics-tab')
+        .addEventListener('shown.bs.tab', loadAnalyticsData, { once: true });
+
 });
 </script>
+
 {% endblock %}

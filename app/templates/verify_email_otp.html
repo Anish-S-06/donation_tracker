@@ -6,7 +6,7 @@
 <body>
     <h2>Email Verification</h2>
 
-    <form method="POST">
+    <form method="POST" action="{{ url_for('auth_routes.verify_email_otp') }}">
         <label>Email:</label><br>
         <input type="email" name="email" required><br><br>
 
@@ -15,5 +15,14 @@
 
         <button type="submit">Verify OTP</button>
     </form>
+
+    <br>
+
+    <p>Didn't receive the OTP?</p>
+
+    <form method="POST" action="{{ url_for('auth_routes.resend_otp') }}">
+        <button type="submit">Resend OTP</button>
+    </form>
+
 </body>
 </html>

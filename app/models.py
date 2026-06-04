@@ -10,8 +10,9 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
+    email_otp = db.Column(db.String(10), nullable=True)
+    otp_expiry = db.Column(db.DateTime, nullable=True)
     role = db.Column(db.Enum('donor', 'receiver', 'admin', name='user_roles'), nullable=False)
-    is_verified = db.Column(db.Boolean, default=False)  # Admin verification status for Donors
     phone_number = db.Column(db.String(20), nullable=True)
     is_email_verified = db.Column(db.Boolean, default=False)
     is_phone_verified = db.Column(db.Boolean, default=False)
@@ -27,7 +28,7 @@ class User(UserMixin, db.Model):
     resources = db.relationship('Resource', backref='donor', lazy=True)
     requests = db.relationship('Request', backref='receiver', lazy=True)
     points_transactions = db.relationship('PointsTransaction', backref='user', lazy=True)
-
+  
     def set_password(self, password):
         salt = bcrypt.gensalt()
         hashed = bcrypt.hashpw(password.encode('utf-8'), salt)

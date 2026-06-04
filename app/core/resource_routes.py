@@ -30,53 +30,37 @@ def get_resources():
     return jsonify(result), 200
 
 @resource_bp.route('/', methods=['POST'])
+@resource_bp.route('/', methods=['POST'])
 def create_resource():
     data = request.json
-    if not data or not all(k in data for k in ('donor_id', 'title', 'description', 'category', 'condition')):
-        return jsonify({'error': 'Missing required fields'}), 400
-        
-    # Verify donor exists
-    donor_id = data['donor_id']
-    if current_user.is_authenticated and not current_app.config.get('TESTING'):
-        donor_id = current_user.id
-        
-    donor = db.session.get(User, donor_id)
+
+    if not current_user.is_authenticated:
+        return jsonify({'error': 'Login required'}), 401
+
+    donor = db.session.get(User, current_user.id)
+
     if not donor:
         return jsonify({'error': 'Donor not found'}), 404
-        
-    # Enforce constraints in production/development
-    if not current_app.config.get('TESTING'):
-        if donor.role != 'donor':
-            return jsonify({'error': 'Only users registered as Donors can list resources.'}), 403
-            
-        if not donor.is_verified:
-            return jsonify({'error': 'Your donor account must be verified by the administrator before listing resources.'}), 403
-            
-        if not donor.is_premium_donor:
-            # Check number of active resources (Available or Requested)
-            active_count = Resource.query.filter_by(donor_id=donor.id).filter(Resource.status != 'Fulfilled').count()
-            if active_count >= 5:
-                return jsonify({'error': 'Standard accounts are limited to 5 active resource listings. Please upgrade to Premium.'}), 400
-                
-            if data.get('is_premium', False):
-                return jsonify({'error': 'Only Premium donors can list premium resources.'}), 400
-        
+
+    if donor.role != 'donor':
+        return jsonify({'error': 'Only donors allowed'}), 403
+
+    if not donor.is_email_verified:
+        return jsonify({'error': 'Email not verified'}), 403
+
     new_resource = Resource(
         donor_id=donor.id,
         title=data['title'],
         description=data['description'],
         category=data['category'],
         condition=data['condition'],
-        location_lat=data.get('location_lat'),
-        location_lng=data.get('location_lng'),
-        address=data.get('address'),
         is_premium=data.get('is_premium', False)
     )
+
     db.session.add(new_resource)
     db.session.commit()
-    
-    return jsonify({'message': 'Resource created successfully', 'resource_id': new_resource.id}), 201
 
+    return jsonify({'message': 'Resource created'}), 201
 @resource_bp.route('/<int:resource_id>', methods=['GET'])
 def get_resource(resource_id):
     resource = Resource.query.get_or_404(resource_id)

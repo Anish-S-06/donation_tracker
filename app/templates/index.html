@@ -2,6 +2,7 @@
 {% block title %}Donation Tracker - Home{% endblock %}
 
 {% block content %}
+<h3>{{ current_user.role }}</h3>
 <div class="row">
     <!-- Left Column: Create Resource (Conditional) -->
     <div class="col-md-4 mb-4">
@@ -13,13 +14,13 @@
                         <p class="text-muted fs-7 mb-3">Share a new item with the community</p>
                         
                         <!-- Verify status banner -->
-                        {% if not current_user.is_verified %}
+                        {% if current_user.role == 'donor' and current_user.verification_status !='approved' %}
                             <div class="alert alert-danger fs-7 py-2 rounded-3">
                                 <strong>Notice:</strong> Your donor account is pending Admin approval. You cannot list resources yet.
                             </div>
                         {% endif %}
                         
-                        <form id="resourceForm" {% if not current_user.is_verified %}style="opacity: 0.5; pointer-events: none;"{% endif %}>
+                        <form id="resourceForm" {% if current_user.verification_status != 'approved' %}style="opacity: 0.5; pointer-events: none;"{% endif %}>
                             <input type="hidden" id="donor_id" value="{{ current_user.id }}">
                             
                             <div class="mb-3">
@@ -69,15 +70,35 @@
                         </form>
                     </div>
                 </div>
-            {% else %}
-                <div class="card premium-card border-0 p-4 text-center">
-                    <div class="card-body">
-                        <h5 class="fw-bold mb-3">Need Resources?</h5>
-                        <p class="text-muted">You are logged in as a <strong>Receiver</strong>. Browse the available listings on the right and contact donors.</p>
-                        <a href="#" class="btn btn-outline-primary rounded-3 w-100 fw-medium disabled">Search & Discovery (P3)</a>
-                    </div>
-                </div>
-            {% endif %}
+            
+
+        {% elif current_user.role == 'receiver' %}
+
+            <div class="card premium-card border-0 p-4 text-center">
+               <div class="card-body">
+                  <h5 class="fw-bold mb-3">Need Resources?</h5>
+                  <p class="text-muted">
+                     You are logged in as a <strong>Receiver</strong>.
+                 </p>
+             </div>
+          </div>
+
+        {% elif current_user.role == 'admin' %}
+
+             <div class="card premium-card border-0 p-4 text-center">
+               <div class="card-body">
+                  <h5 class="fw-bold mb-3">Administrator</h5>
+                  <p class="text-muted">
+                    You are logged in as an <strong>Admin</strong>.
+                  </p>
+                  <a href="{{ url_for('admin_routes.dashboard') }}"
+                     class="btn btn-outline-danger">
+                     Open Admin Dashboard
+                  </a>
+              </div>
+           </div>
+
+        {% endif %}
         {% else %}
             <div class="card premium-card border-0 p-4 text-center">
                 <div class="card-body">
