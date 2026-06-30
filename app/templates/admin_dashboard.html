@@ -2,21 +2,6 @@
 {% block title %}Admin Dashboard - Donation Tracker{% endblock %}
 
 {% block extra_css %}
-<style>
-    .kpi-card {
-        border-radius: 16px;
-        transition: transform 0.2s ease;
-    }
-    .kpi-card:hover {
-        transform: scale(1.02);
-    }
-    .chart-container {
-        position: relative;
-        margin: auto;
-        height: 250px;
-        width: 100%;
-    }
-</style>
 {% endblock %}
 
 {% block content %}
@@ -95,6 +80,7 @@
                             <th>ID</th>
                             <th>Email</th>
                             <th>Role</th>
+                            <th>ID Document</th>
                             <th>Status</th>
                             <th>Ban</th>
                             <th class="text-end">Actions</th>
@@ -110,8 +96,16 @@
 
                             <td>
                                 <span class="badge bg-secondary">{{ u.role }}</span>
-                                {% if u.is_premium_donor %}
-                                    <span class="badge bg-dark">Premium</span>
+                            </td>
+
+                            <!-- ID DOCUMENT -->
+                            <td>
+                                {% if u.id_document %}
+                                    <a href="{{ url_for('static', filename=u.id_document) }}" target="_blank" class="btn btn-sm btn-outline-info">
+                                        <i class="bi bi-file-earmark-pdf"></i> View Doc
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted small">None</span>
                                 {% endif %}
                             </td>
 

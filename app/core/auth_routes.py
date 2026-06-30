@@ -101,7 +101,7 @@ def register():
             flash("All fields required", "danger")
             return redirect(url_for('auth_routes.register'))
 
-        if role not in ['donor', 'receiver']:
+        if role not in ['donor', 'receiver', 'ngo']:
             flash("Invalid role", "danger")
             return redirect(url_for('auth_routes.register'))
 
@@ -116,7 +116,10 @@ def register():
             'email': email,
             'password': password,
             'role': role,
-            'phone_number': phone_number
+            'phone_number': phone_number,
+            'ngo_name': request.form.get('ngo_name'),
+            'ngo_description': request.form.get('ngo_description'),
+            'upi_id': request.form.get('upi_id')
         }
 
         otp = generate_otp()
@@ -163,16 +166,26 @@ def verify_email_otp():
             return redirect(url_for('auth_routes.register'))
 
         if user_otp == stored["otp"]:
+            
+            actual_role = pending_user['role']
+            is_ngo = False
+            
+            if actual_role == 'ngo':
+                actual_role = 'receiver'
+                is_ngo = True
 
             new_user = User(
                 email=pending_user['email'],
-                role=pending_user['role'],
+                role=actual_role,
                 phone_number=pending_user['phone_number'],
                 is_email_verified=True,
                 is_phone_verified=False,
                 verification_status='pending',
-                is_premium_donor=False,
-                is_banned=False
+                is_banned=False,
+                is_ngo=is_ngo,
+                ngo_name=pending_user.get('ngo_name'),
+                ngo_description=pending_user.get('ngo_description'),
+                upi_id=pending_user.get('upi_id')
             )
 
             new_user.set_password(pending_user['password'])
@@ -292,21 +305,6 @@ def logout():
 
 
 # ======================================================
-# PREMIUM UPGRADE
-# ======================================================
-@auth_bp.route('/upgrade-premium', methods=['POST'])
-@login_required
-@role_required('donor')
-def upgrade_premium():
-
-    current_user.is_premium_donor = True
-    db.session.commit()
-
-    flash("Upgraded to Premium successfully!", "success")
-    return redirect(url_for('profile_routes.profile'))
-
-
-# ======================================================
 # GOOGLE LOGIN (MOCK)
 # ======================================================
 @auth_bp.route('/google')
@@ -326,7 +324,6 @@ def google_callback():
             role='donor',
             is_email_verified=True,
             is_phone_verified=False,
-            is_premium_donor=False,
             verification_status='approved'
         )
 

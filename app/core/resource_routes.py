@@ -24,8 +24,7 @@ def get_resources():
         'category': r.category,
         'condition': r.condition,
         'status': r.status,
-        'donor_id': r.donor_id,
-        'is_premium': r.is_premium
+        'donor_id': r.donor_id
     } for r in resources]
     return jsonify(result), 200
 
@@ -54,7 +53,9 @@ def create_resource():
         description=data['description'],
         category=data['category'],
         condition=data['condition'],
-        is_premium=data.get('is_premium', False)
+        address=data.get('address'),
+        location_lat=data.get('location_lat'),
+        location_lng=data.get('location_lng')
     )
 
     db.session.add(new_resource)
@@ -74,7 +75,6 @@ def get_resource(resource_id):
         'location_lng': resource.location_lng,
         'address': resource.address,
         'status': resource.status,
-        'is_premium': resource.is_premium,
         'donor_id': resource.donor_id
     }), 200
 
@@ -102,15 +102,29 @@ def update_resource(resource_id):
         resource.location_lng = data['location_lng']
     if 'address' in data:
         resource.address = data['address']
-    if 'is_premium' in data:
-        resource.is_premium = data['is_premium']
         
     db.session.commit()
     return jsonify({'message': f'Resource {resource_id} updated successfully'}), 200
 
 @resource_bp.route('/<int:resource_id>', methods=['DELETE'])
 def delete_resource(resource_id):
+    if not current_user.is_authenticated:
+        return jsonify({'error': 'Login required'}), 401
+        
     resource = Resource.query.get_or_404(resource_id)
+    
+    if current_user.id != resource.donor_id and current_user.role != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+        
+    from app.models import Request as DonationRequest, DonationHistory
+    # Delete histories of requests first
+    reqs = DonationRequest.query.filter_by(resource_id=resource_id).all()
+    for req in reqs:
+        DonationHistory.query.filter_by(request_id=req.id).delete()
+    
+    # Delete requests
+    DonationRequest.query.filter_by(resource_id=resource_id).delete()
+    
     db.session.delete(resource)
     db.session.commit()
     return jsonify({'message': f'Resource {resource_id} deleted successfully'}), 200

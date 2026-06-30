@@ -27,15 +27,11 @@
 
                 <div class="mb-3">
                     <span class="badge bg-primary text-capitalize">{{ current_user.role }}</span>
-                    {% if current_user.is_premium_donor %}
-                        <span class="badge bg-warning text-dark">Premium Donor</span>
-                    {% endif %}
                 </div>
 
                 <hr class="my-4">
 
                 <!-- UPLOAD PHOTO -->
-                <h6 class="fw-bold text-start mb-3">Upload Profile Photo</h6>
                 <form action="{{ url_for('profile_routes.upload_photo') }}"
                       method="POST"
                       enctype="multipart/form-data">
@@ -45,9 +41,32 @@
                            accept="image/*"
                            required>
                     <button class="btn btn-primary btn-sm w-100">
-                        Upload & Save
+                        Upload Photo
                     </button>
                 </form>
+                
+                <hr class="my-4">
+
+                <!-- UPLOAD ID DOCUMENT -->
+                <h6 class="fw-bold text-start mb-3">Upload ID Document (Admin Review)</h6>
+                <form action="{{ url_for('profile_routes.upload_document') }}"
+                      method="POST"
+                      enctype="multipart/form-data">
+                    <input class="form-control form-control-sm mb-2"
+                           type="file"
+                           name="id_document"
+                           accept="image/*,application/pdf"
+                           required>
+                    <button class="btn btn-secondary btn-sm w-100">
+                        Upload Document
+                    </button>
+                </form>
+                
+                {% if current_user.id_document %}
+                    <div class="mt-3 text-start">
+                        <small class="text-success fw-bold"><i class="bi bi-check-circle"></i> Document Uploaded</small>
+                    </div>
+                {% endif %}
 
             </div>
         </div>
@@ -139,35 +158,288 @@
             </div>
         </div>
 
-        <!-- PREMIUM -->
+
+
+        <!-- MY ACTIVE LISTINGS -->
         {% if current_user.role == 'donor' %}
-        <div class="card premium-card border-0 p-4">
-
-            <h5 class="fw-bold mb-3">Donor Tier</h5>
-
-            {% if current_user.is_premium_donor %}
-
-                <div class="alert alert-success">
-                    Premium Donor Active — Unlimited Listings Enabled
-                </div>
-
+        <div class="card premium-card border-0 p-4 mt-4">
+            <h5 class="fw-bold mb-4">My Active Listings</h5>
+            {% if not resources %}
+                <p class="text-muted small">You haven't listed any resources yet.</p>
             {% else %}
-
-                <p class="text-muted">
-                    Free tier: max 5 active listings
-                </p>
-
-                <form action="{{ url_for('auth_routes.upgrade_premium') }}" method="POST">
-                    <button class="btn btn-success">
-                        Upgrade to Premium
-                    </button>
-                </form>
-
+                <ul class="list-group list-group-flush">
+                {% for r in resources %}
+                    <li class="list-group-item bg-transparent border-bottom border-light px-0 py-3" id="listing-{{ r.id }}">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0 fw-bold">{{ r.title }}</h6>
+                                <small class="text-muted">Status: 
+                                    <span class="badge bg-{{ 'success' if r.status == 'Available' else 'warning' if r.status == 'Requested' else 'secondary' }}">{{ r.status }}</span>
+                                </small>
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-outline-danger delete-listing-btn" data-id="{{ r.id }}">
+                                    <i class="bi bi-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    </li>
+                {% endfor %}
+                </ul>
             {% endif %}
-
         </div>
         {% endif %}
 
+        <!-- REQUEST MANAGEMENT -->
+        <div class="card premium-card border-0 p-4 mt-4">
+            <h5 class="fw-bold mb-4">Request Management</h5>
+
+            {% if current_user.role == 'donor' %}
+                <h6 class="text-muted mb-3">Incoming Requests</h6>
+                {% if not incoming_requests %}
+                    <p class="text-muted small">No requests yet.</p>
+                {% else %}
+                    <ul class="list-group list-group-flush">
+                    {% for req in incoming_requests %}
+                        <li class="list-group-item bg-transparent border-bottom border-light px-0 py-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0 fw-bold">{{ req.resource.title }}</h6>
+                                    <small class="text-muted">Requested by User ID: {{ req.receiver_id }}</small>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    {% if req.status == 'Pending' %}
+                                        <form method="POST" action="{{ url_for('request_routes.accept_request', req_id=req.id) }}">
+                                            <button class="btn btn-sm btn-success">Accept</button>
+                                        </form>
+                                        <form method="POST" action="{{ url_for('request_routes.reject_request', req_id=req.id) }}">
+                                            <button class="btn btn-sm btn-outline-danger">Reject</button>
+                                        </form>
+                                    {% elif req.status == 'Accepted' %}
+                                        <span class="badge bg-primary align-self-center">Accepted</span>
+                                        <button class="btn btn-sm btn-outline-primary chat-btn" data-req-id="{{ req.id }}" data-title="{{ req.resource.title }}">Chat</button>
+                                        <form method="POST" action="{{ url_for('request_routes.fulfill_request', req_id=req.id) }}">
+                                            <button class="btn btn-sm btn-info text-white">Mark Fulfilled</button>
+                                        </form>
+                                    {% elif req.status == 'Fulfilled' %}
+                                        <span class="badge bg-info align-self-center">Fulfilled</span>
+                                        <button class="btn btn-sm btn-outline-primary chat-btn" data-req-id="{{ req.id }}" data-title="{{ req.resource.title }}">Chat</button>
+                                        {% if req.history and not req.history.receiver_rating %}
+                                            <form method="POST" action="{{ url_for('request_routes.rate_exchange', history_id=req.history.id) }}" class="d-flex align-items-center gap-2">
+                                                <input type="number" name="rating" min="1" max="5" class="form-control form-control-sm" style="width: 60px;" placeholder="1-5" required>
+                                                <button class="btn btn-sm btn-warning">Rate</button>
+                                            </form>
+                                        {% elif req.history and req.history.receiver_rating %}
+                                            <span class="text-warning small fw-bold">Rated: {{ req.history.receiver_rating }} ★</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ req.status }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </li>
+                    {% endfor %}
+                    </ul>
+                {% endif %}
+            {% elif current_user.role == 'receiver' %}
+                <h6 class="text-muted mb-3">My Outgoing Requests</h6>
+                {% if not outgoing_requests %}
+                    <p class="text-muted small">You haven't requested anything yet.</p>
+                {% else %}
+                    <ul class="list-group list-group-flush">
+                    {% for req in outgoing_requests %}
+                        <li class="list-group-item bg-transparent border-bottom border-light px-0 py-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0 fw-bold">{{ req.resource.title }}</h6>
+                                    <small class="text-muted">Status: 
+                                        <span class="badge bg-{{ 'warning' if req.status == 'Pending' else 'success' if req.status in ['Accepted', 'Fulfilled'] else 'danger' }}">{{ req.status }}</span>
+                                    </small>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    {% if req.status in ['Accepted', 'Fulfilled'] %}
+                                        <button class="btn btn-sm btn-outline-primary chat-btn align-self-center" data-req-id="{{ req.id }}" data-title="{{ req.resource.title }}">Chat</button>
+                                    {% endif %}
+                                    {% if req.status == 'Fulfilled' %}
+                                        {% if req.history and not req.history.donor_rating %}
+                                            <form method="POST" action="{{ url_for('request_routes.rate_exchange', history_id=req.history.id) }}" class="d-flex align-items-center gap-2">
+                                                <input type="number" name="rating" min="1" max="5" class="form-control form-control-sm" style="width: 60px;" placeholder="1-5" required>
+                                                <button class="btn btn-sm btn-warning">Rate Donor</button>
+                                            </form>
+                                        {% elif req.history and req.history.donor_rating %}
+                                            <span class="text-warning small fw-bold">Rated: {{ req.history.donor_rating }} ★</span>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </li>
+                    {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endif %}
+        </div>
+
     </div>
 </div>
+
+<!-- Chat Modal -->
+<div class="modal fade" id="chatModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="chatModalLabel">Chat</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="chatBox" style="height: 400px; overflow-y: auto; background: var(--bg-color);">
+        <!-- Messages go here -->
+      </div>
+      <div class="modal-footer">
+        <div class="input-group">
+          <input type="text" id="chatInput" class="form-control" placeholder="Type a message...">
+          <button class="btn btn-primary" id="chatSendBtn">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const deleteButtons = document.querySelectorAll('.delete-listing-btn');
+    
+    deleteButtons.forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const resourceId = e.currentTarget.getAttribute('data-id');
+            
+            if (confirm("Are you sure you want to delete this listing? All associated requests will also be deleted.")) {
+                try {
+                    const res = await fetch(`/resources/${resourceId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (res.ok) {
+                        // Remove from DOM
+                        document.getElementById(`listing-${resourceId}`).remove();
+                        if (typeof Toastify !== 'undefined') {
+                            Toastify({
+                                text: "Listing deleted successfully!",
+                                duration: 3000,
+                                gravity: "top",
+                                position: "right",
+                                style: { background: "linear-gradient(to right, #00b09b, #96c93d)", borderRadius: "10px" }
+                            }).showToast();
+                        } else {
+                            window.location.reload();
+                        }
+                    } else {
+                        const errorData = await res.json();
+                        alert('Failed to delete: ' + (errorData.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    console.error("Error deleting resource", error);
+                    alert("An error occurred while deleting the resource.");
+                }
+            }
+        });
+    });
+
+    // Chat Logic
+    let currentChatReqId = null;
+    let chatPollInterval = null;
+    const chatModalEl = document.getElementById('chatModal');
+    const chatModal = new bootstrap.Modal(chatModalEl);
+    const chatBox = document.getElementById('chatBox');
+    const chatInput = document.getElementById('chatInput');
+    const chatSendBtn = document.getElementById('chatSendBtn');
+    
+    document.querySelectorAll('.chat-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            currentChatReqId = e.currentTarget.getAttribute('data-req-id');
+            const title = e.currentTarget.getAttribute('data-title');
+            document.getElementById('chatModalLabel').innerText = `Chat: ${title}`;
+            chatBox.innerHTML = '<div class="text-center mt-3"><div class="spinner-border text-primary" role="status"></div></div>';
+            chatModal.show();
+            fetchMessages();
+            chatPollInterval = setInterval(fetchMessages, 3000);
+        });
+    });
+    
+    chatModalEl.addEventListener('hidden.bs.modal', () => {
+        clearInterval(chatPollInterval);
+        currentChatReqId = null;
+    });
+    
+    chatSendBtn.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
+    
+    async function fetchMessages() {
+        if (!currentChatReqId) return;
+        try {
+            const res = await fetch(`/request/${currentChatReqId}/messages`);
+            if (res.ok) {
+                const messages = await res.json();
+                renderMessages(messages);
+            }
+        } catch (err) {
+            console.error("Error fetching messages", err);
+        }
+    }
+    
+    function renderMessages(messages) {
+        if (messages.length === 0) {
+            chatBox.innerHTML = '<p class="text-center text-muted mt-3">No messages yet. Say hi!</p>';
+            return;
+        }
+        
+        let html = '';
+        messages.forEach(m => {
+            const align = m.is_me ? 'text-end' : 'text-start';
+            const bgClass = m.is_me ? 'bg-primary text-white' : 'bg-white border text-dark';
+            const radiusClass = m.is_me ? 'rounded-start rounded-top border-0' : 'rounded-end rounded-top';
+            const time = new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            html += `
+                <div class="mb-3 ${align}">
+                    <div class="d-inline-block px-3 py-2 shadow-sm ${bgClass} ${radiusClass}" style="max-width: 75%;">
+                        ${m.content}
+                    </div>
+                    <div class="small text-muted mt-1" style="font-size: 0.7rem;">${time}</div>
+                </div>
+            `;
+        });
+        
+        const isScrolledToBottom = chatBox.scrollHeight - chatBox.clientHeight <= chatBox.scrollTop + 50;
+        chatBox.innerHTML = html;
+        if (isScrolledToBottom) {
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    }
+    
+    async function sendMessage() {
+        const text = chatInput.value.trim();
+        if (!text || !currentChatReqId) return;
+        
+        chatInput.value = '';
+        chatInput.focus();
+        
+        try {
+            await fetch(`/request/${currentChatReqId}/messages`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({content: text})
+            });
+            fetchMessages();
+        } catch (err) {
+            console.error("Error sending message", err);
+        }
+    }
+});
+</script>
 {% endblock %}

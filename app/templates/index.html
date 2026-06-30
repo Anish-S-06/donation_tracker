@@ -1,123 +1,196 @@
 {% extends 'base.html' %}
 {% block title %}Donation Tracker - Home{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+{% endblock %}
+
 {% block content %}
-<h3>{{ current_user.role }}</h3>
-<div class="row">
+
+<!-- Hero Section for Non-Logged In Users -->
+{% if not current_user.is_authenticated %}
+<!-- Guest Landing Page: Direct NGO Donations -->
+<div class="row mb-5 mt-4 text-center" data-aos="fade-up">
+    <div class="col-12">
+        <h1 class="display-4 fw-bold mb-3" style="line-height: 1.2;">
+            Support Verified NGOs Directly
+        </h1>
+        <p class="lead text-muted mx-auto" style="max-width: 700px;">
+            You can donate funds directly to these verified NGOs via UPI without creating an account. 100% of your donation goes directly to them.
+        </p>
+    </div>
+</div>
+
+<div class="row g-4 mb-5" data-aos="fade-up" data-aos-delay="100">
+    {% if ngos %}
+        {% for ngo in ngos %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card premium-card h-100 border-0 shadow-sm p-3">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                            <i class="fs-4">🤝</i>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-0">{{ ngo.ngo_name or ngo.email }}</h5>
+                    </div>
+                    <p class="text-muted fs-7 mb-4 flex-grow-1">{{ ngo.ngo_description or 'Working towards a better community.' }}</p>
+                    
+                    {% if ngo.upi_id %}
+                        <!-- Mobile UPI deep link -->
+                        <a href="upi://pay?pa={{ ngo.upi_id }}&pn={{ ngo.ngo_name or 'NGO' }}&cu=INR" class="btn btn-gradient-primary w-100 py-2 rounded-pill fw-bold mb-3 d-md-none">
+                            Donate via UPI App
+                        </a>
+                        <!-- Desktop copy/display -->
+                        <div class="bg-light rounded-3 p-3 text-center border mt-auto">
+                            <span class="fs-7 text-muted d-block mb-1 text-uppercase fw-bold">Direct UPI ID</span>
+                            <strong class="text-primary fs-5">{{ ngo.upi_id }}</strong>
+                        </div>
+                    {% else %}
+                        <button class="btn btn-secondary w-100 py-2 rounded-pill fw-bold disabled mt-auto">UPI Not Available</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12 text-center text-muted py-5">
+            <div class="mb-3" style="font-size: 3rem;">🏢</div>
+            <h4 class="fw-bold text-dark">No NGOs Available Yet</h4>
+            <p>We are currently verifying our NGO partners. Check back soon!</p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Sign Up CTA Section -->
+<hr class="my-5" style="opacity: 0.1;" data-aos="fade-in">
+<div class="row align-items-center mb-5 premium-card p-5 border-0 shadow-sm" data-aos="fade-up" data-aos-delay="200" style="border-radius: 24px;">
+    <div class="col-md-8 text-center text-md-start mb-4 mb-md-0">
+        <h2 class="fw-bold mb-2 text-dark">Want to donate other resources?</h2>
+        <h3 class="text-muted fw-normal mb-0">Or want to receive resources?</h3>
+    </div>
+    <div class="col-md-4 text-center text-md-end">
+        <a href="{{ url_for('auth_routes.register') }}" class="btn btn-gradient-secondary btn-lg w-100 py-3 rounded-pill fw-bold shadow">
+            Sign Up to Access
+        </a>
+        <div class="mt-3">
+            <span class="text-muted fs-7">Already have an account? <a href="{{ url_for('auth_routes.login') }}" class="text-primary fw-bold text-decoration-none">Log In</a></span>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<!-- Logged In Dashboard View -->
+
+<div class="row" data-aos="fade-up">
     <!-- Left Column: Create Resource (Conditional) -->
     <div class="col-md-4 mb-4">
-        {% if current_user.is_authenticated %}
-            {% if current_user.role == 'donor' %}
-                <div class="card premium-card border-0 p-3">
-                    <div class="card-body">
-                        <h5 class="fw-bold mb-1 text-gradient">Create Resource</h5>
-                        <p class="text-muted fs-7 mb-3">Share a new item with the community</p>
+        {% if current_user.role == 'donor' %}
+            <div class="card premium-card border-0 p-3 shadow-sm">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-1 text-gradient">Create Resource</h5>
+                    <p class="text-muted fs-7 mb-3">Share a new item with the community</p>
+                    
+                    {% if current_user.verification_status != 'approved' %}
+                        <div class="alert alert-danger fs-7 py-2 rounded-3 shadow-sm">
+                            <strong>Notice:</strong> Your donor account is pending Admin approval. You cannot list resources yet. <a href="{{ url_for('profile_routes.profile') }}" class="alert-link">Upload your ID Document in your profile</a> to speed up the process.
+                        </div>
+                    {% endif %}
+                    
+                    <form id="resourceForm" {% if current_user.verification_status != 'approved' %}style="opacity: 0.5; pointer-events: none;"{% endif %}>
+                        <input type="hidden" id="donor_id" value="{{ current_user.id }}">
                         
-                        <!-- Verify status banner -->
-                        {% if current_user.role == 'donor' and current_user.verification_status !='approved' %}
-                            <div class="alert alert-danger fs-7 py-2 rounded-3">
-                                <strong>Notice:</strong> Your donor account is pending Admin approval. You cannot list resources yet.
-                            </div>
-                        {% endif %}
+                        <div class="mb-3">
+                            <label class="form-label fw-medium fs-7">Title</label>
+                            <input type="text" class="form-control rounded-3 bg-light border-0 px-3 py-2" id="title" placeholder="e.g. Warm Winter Coat" required>
+                        </div>
                         
-                        <form id="resourceForm" {% if current_user.verification_status != 'approved' %}style="opacity: 0.5; pointer-events: none;"{% endif %}>
-                            <input type="hidden" id="donor_id" value="{{ current_user.id }}">
-                            
-                            <div class="mb-3">
-                                <label class="form-label fw-medium fs-7">Title</label>
-                                <input type="text" class="form-control rounded-3" id="title" placeholder="e.g. Warm Winter Coat" required>
+                        <div class="mb-3">
+                            <label class="form-label fw-medium fs-7">Description</label>
+                            <textarea class="form-control rounded-3 bg-light border-0 px-3 py-2" id="description" rows="3" placeholder="Describe the condition and pick-up details..." required></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-medium fs-7">Category</label>
+                            <select class="form-select rounded-3 bg-light border-0 px-3 py-2" id="category">
+                                <option value="Clothing">Clothing</option>
+                                <option value="Food">Food</option>
+                                <option value="Electronics">Electronics</option>
+                                <option value="Books">Books</option>
+                                <option value="Household">Household</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-medium fs-7">Condition</label>
+                            <select class="form-select rounded-3 bg-light border-0 px-3 py-2" id="condition">
+                                <option>New</option>
+                                <option>Like New</option>
+                                <option>Good</option>
+                                <option>Fair</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-medium fs-7">Pickup Address (Optional)</label>
+                            <div class="input-group mb-2">
+                                <input type="text" class="form-control bg-light border-0 px-3 py-2" id="address" placeholder="e.g. 123 Main St, City">
+                                <button class="btn btn-outline-secondary bg-light border-0" type="button" id="getLocationBtn" title="Use My Current Location">
+                                    📍 GPS
+                                </button>
+                                <button class="btn btn-outline-secondary bg-light border-0" type="button" id="showMapBtn" title="Pick from Map">
+                                    🗺️ Map
+                                </button>
                             </div>
-                            
-                            <div class="mb-3">
-                                <label class="form-label fw-medium fs-7">Description</label>
-                                <textarea class="form-control rounded-3" id="description" rows="3" placeholder="Describe the condition and pick-up details..." required></textarea>
+                            <div id="mapContainer" style="display: none;" class="mb-2">
+                                <div id="pickupMap" style="height: 250px; width: 100%; border-radius: 12px; z-index: 1;"></div>
+                                <div class="form-text fs-7 mt-1 text-muted">Click anywhere on the map to automatically set the address.</div>
                             </div>
-                            
-                            <div class="mb-3">
-                                <label class="form-label fw-medium fs-7">Category</label>
-                                <select class="form-select rounded-3" id="category">
-                                    <option value="Clothing">Clothing</option>
-                                    <option value="Food">Food</option>
-                                    <option value="Electronics">Electronics</option>
-                                    <option value="Books">Books</option>
-                                    <option value="Household">Household</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label class="form-label fw-medium fs-7">Condition</label>
-                                <select class="form-select rounded-3" id="condition">
-                                    <option>New</option>
-                                    <option>Like New</option>
-                                    <option>Good</option>
-                                    <option>Fair</option>
-                                </select>
-                            </div>
-                            
-                            {% if current_user.is_premium_donor %}
-                                <div class="mb-3 form-check">
-                                    <input type="checkbox" class="form-check-input" id="is_premium">
-                                    <label class="form-check-label fw-medium fs-7 text-warning" for="is_premium">⭐ Feature as Premium Listing</label>
-                                </div>
-                            {% else %}
-                                <div class="alert alert-light border rounded-3 fs-7 py-2 mb-3">
-                                    <span class="text-muted">Upgrade to <strong class="text-warning">Premium Plan</strong> in your Profile to feature listings.</span>
-                                </div>
-                            {% endif %}
-                            
-                            <button type="submit" class="btn btn-gradient-primary w-100 py-2 rounded-3 fw-semibold">Add Listing</button>
-                        </form>
-                    </div>
+                            <input type="hidden" id="location_lat">
+                            <input type="hidden" id="location_lng">
+                            <div class="form-text fs-7" id="locationStatus"></div>
+                        </div>
+                        
+                        
+                        <button type="submit" class="btn btn-gradient-primary w-100 py-2 rounded-3 fw-semibold shadow-sm">Add Listing</button>
+                    </form>
                 </div>
+            </div>
             
-
         {% elif current_user.role == 'receiver' %}
-
-            <div class="card premium-card border-0 p-4 text-center">
+            <div class="card premium-card border-0 p-4 text-center shadow-sm">
                <div class="card-body">
-                  <h5 class="fw-bold mb-3">Need Resources?</h5>
-                  <p class="text-muted">
-                     You are logged in as a <strong>Receiver</strong>.
-                 </p>
+                  <h5 class="fw-bold mb-3">Find Donations</h5>
+                  <p class="text-muted mb-4">
+                     Ready to find what you need? Open the interactive map to search for items near you!
+                  </p>
+                  <a href="{{ url_for('search_routes.search_page') }}" class="btn btn-gradient-primary w-100 py-2 rounded-pill fw-bold shadow-sm">Open Search Map</a>
              </div>
           </div>
-
         {% elif current_user.role == 'admin' %}
-
-             <div class="card premium-card border-0 p-4 text-center">
+             <div class="card premium-card border-0 p-4 text-center shadow-sm">
                <div class="card-body">
-                  <h5 class="fw-bold mb-3">Administrator</h5>
-                  <p class="text-muted">
-                    You are logged in as an <strong>Admin</strong>.
+                  <h5 class="fw-bold mb-3">Administrator Access</h5>
+                  <p class="text-muted mb-4">
+                    Manage the entire platform from your control center.
                   </p>
                   <a href="{{ url_for('admin_routes.dashboard') }}"
-                     class="btn btn-outline-danger">
+                     class="btn btn-outline-danger w-100 rounded-pill py-2 fw-bold">
                      Open Admin Dashboard
                   </a>
               </div>
            </div>
-
-        {% endif %}
-        {% else %}
-            <div class="card premium-card border-0 p-4 text-center">
-                <div class="card-body">
-                    <h5 class="fw-bold mb-3">Get Started</h5>
-                    <p class="text-muted">Create an account or login to list donations or request active listings.</p>
-                    <div class="d-grid gap-2">
-                        <a href="{{ url_for('auth_routes.login') }}" class="btn btn-gradient-primary rounded-3 py-2 fw-semibold">Login</a>
-                        <a href="{{ url_for('auth_routes.register') }}" class="btn btn-outline-dark rounded-3 py-2 fw-semibold border-2">Register</a>
-                    </div>
-                </div>
-            </div>
         {% endif %}
     </div>
 
     <!-- Right Column: Available Resources -->
-    <div class="col-md-8">
-        <div class="card premium-card border-0 p-3">
+    <div class="col-md-8" data-aos="fade-left" data-aos-delay="200">
+        <div class="card premium-card border-0 p-3 shadow-sm">
             <div class="card-body">
-                <h5 class="fw-bold mb-3 text-gradient">Available Resources</h5>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-bold mb-0 text-gradient">Recently Added Resources</h5>
+                    <a href="{{ url_for('search_routes.search_page') }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">View Map</a>
+                </div>
                 
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
@@ -131,31 +204,32 @@
                         </thead>
                         <tbody id="resourceTable">
                             {% for r in resources %}
-                            <tr {% if r.is_premium %}class="table-warning border-warning border-start border-4" style="background: rgba(245, 158, 11, 0.05);"{% endif %}>
+                            <tr>
                                 <td>
-                                    <div class="fw-semibold">
+                                    <div class="fw-bold text-dark">
                                         {{ r.title }}
-                                        {% if r.is_premium %}
-                                            <span class="badge badge-premium ms-1" style="font-size: 0.7rem;">PREMIUM</span>
-                                        {% endif %}
                                     </div>
-                                    <div class="text-muted fs-7">{{ r.description }}</div>
+                                    <div class="text-muted fs-7 text-truncate" style="max-width: 250px;">{{ r.description }}</div>
                                 </td>
-                                <td><span class="badge bg-secondary">{{ r.category }}</span></td>
-                                <td>{{ r.condition }}</td>
+                                <td><span class="badge bg-light text-dark border">{{ r.category }}</span></td>
+                                <td><span class="text-muted fs-7">{{ r.condition }}</span></td>
                                 <td>
                                     {% if r.status == 'Available' %}
-                                        <span class="badge bg-success">{{ r.status }}</span>
+                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">{{ r.status }}</span>
                                     {% elif r.status == 'Requested' %}
-                                        <span class="badge bg-warning text-dark">{{ r.status }}</span>
+                                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25">{{ r.status }}</span>
                                     {% else %}
-                                        <span class="badge bg-secondary">{{ r.status }}</span>
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25">{{ r.status }}</span>
                                     {% endif %}
                                 </td>
                             </tr>
                             {% else %}
                             <tr>
-                                <td colspan="4" class="text-center text-muted py-4">No resources listed on the platform yet.</td>
+                                <td colspan="4" class="text-center text-muted py-5">
+                                    <div class="mb-3" style="font-size: 2rem;">📭</div>
+                                    <h6 class="fw-bold text-dark">No resources found</h6>
+                                    <p class="fs-7 mb-0">Be the first to list an item on the platform!</p>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -165,38 +239,178 @@
         </div>
     </div>
 </div>
+
+{% endif %}
+
+
+
 {% endblock %}
 
 {% block extra_js %}
+
+{% if current_user.is_authenticated and current_user.role == 'donor' %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const form = document.getElementById('resourceForm');
 if (form) {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        const isPremiumCheckbox = document.getElementById('is_premium');
         const data = {
             donor_id: parseInt(document.getElementById('donor_id').value),
             title: document.getElementById('title').value,
             description: document.getElementById('description').value,
             category: document.getElementById('category').value,
             condition: document.getElementById('condition').value,
-            is_premium: isPremiumCheckbox ? isPremiumCheckbox.checked : false
+            address: document.getElementById('address') ? document.getElementById('address').value : null,
+            location_lat: document.getElementById('location_lat') && document.getElementById('location_lat').value ? parseFloat(document.getElementById('location_lat').value) : null,
+            location_lng: document.getElementById('location_lng') && document.getElementById('location_lng').value ? parseFloat(document.getElementById('location_lng').value) : null
         };
         
-        const res = await fetch('/resources/', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(data)
-        });
+        try {
+            const res = await fetch('/resources/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            
+            if (res.ok) {
+                if(typeof Toastify !== 'undefined') {
+                    Toastify({
+                        text: "Resource successfully listed!",
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        style: { background: "linear-gradient(to right, #00b09b, #96c93d)", borderRadius: "10px" }
+                    }).showToast();
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    window.location.reload();
+                }
+            } else {
+                const errorData = await res.json();
+                if(typeof Toastify !== 'undefined') {
+                    Toastify({
+                        text: "Failed: " + (errorData.error || 'Unknown error'),
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        style: { background: "linear-gradient(to right, #ff5f6d, #ffc371)", borderRadius: "10px" }
+                    }).showToast();
+                } else {
+                    alert('Failed to create resource: ' + (errorData.error || 'Unknown error'));
+                }
+            }
+        } catch (error) {
+            console.error("Error creating resource", error);
+        }
+    });
+}
+
+const locBtn = document.getElementById('getLocationBtn');
+if (locBtn) {
+    locBtn.addEventListener('click', () => {
+        const status = document.getElementById('locationStatus');
+        if (!navigator.geolocation) {
+            status.textContent = "Geolocation is not supported by your browser";
+            status.className = "form-text text-danger fs-7";
+            return;
+        }
         
-        if (res.ok) {
-            window.location.reload();
+        status.textContent = "Locating...";
+        status.className = "form-text text-muted fs-7";
+        
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                document.getElementById('location_lat').value = lat;
+                document.getElementById('location_lng').value = lng;
+                
+                // Try reverse geocoding to fill address
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                    const data = await res.json();
+                    if (data && data.display_name) {
+                        document.getElementById('address').value = data.display_name;
+                    }
+                } catch (e) {}
+
+                status.textContent = "✓ GPS Location captured securely!";
+                status.className = "form-text text-success fs-7 fw-bold";
+                
+                if(pickupMarker && pickupMap) {
+                    pickupMarker.setLatLng([lat, lng]);
+                    pickupMap.setView([lat, lng], 15);
+                }
+            },
+            (error) => {
+                status.textContent = "Failed to get location. Your browser/device might be blocking GPS access on non-HTTPS connections.";
+                status.className = "form-text text-danger fs-7";
+            }
+        );
+    });
+}
+
+// Leaflet Map Logic
+const showMapBtn = document.getElementById('showMapBtn');
+const mapContainer = document.getElementById('mapContainer');
+let pickupMap = null;
+let pickupMarker = null;
+
+if (showMapBtn) {
+    showMapBtn.addEventListener('click', () => {
+        if (mapContainer.style.display === 'none') {
+            mapContainer.style.display = 'block';
+            
+            // Initialize map if not already done
+            if (!pickupMap) {
+                // Default to a central point (e.g., India or roughly anywhere)
+                pickupMap = L.map('pickupMap').setView([20.5937, 78.9629], 5);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '© OpenStreetMap'
+                }).addTo(pickupMap);
+                
+                pickupMarker = L.marker([20.5937, 78.9629]).addTo(pickupMap);
+
+                // Map Click Event for Reverse Geocoding
+                pickupMap.on('click', async function(e) {
+                    const lat = e.latlng.lat;
+                    const lng = e.latlng.lng;
+                    
+                    pickupMarker.setLatLng(e.latlng);
+                    document.getElementById('location_lat').value = lat;
+                    document.getElementById('location_lng').value = lng;
+                    
+                    const status = document.getElementById('locationStatus');
+                    status.textContent = "Fetching address...";
+                    status.className = "form-text text-muted fs-7";
+
+                    try {
+                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                        const data = await res.json();
+                        if (data && data.display_name) {
+                            document.getElementById('address').value = data.display_name;
+                            status.textContent = "✓ Map Location captured!";
+                            status.className = "form-text text-success fs-7 fw-bold";
+                        }
+                    } catch (err) {
+                        status.textContent = "✓ Map coordinates captured, but failed to fetch address name.";
+                        status.className = "form-text text-warning fs-7 fw-bold";
+                    }
+                });
+            }
+            
+            // Fix Leaflet tile loading issue when div is initially hidden
+            setTimeout(() => {
+                pickupMap.invalidateSize();
+            }, 100);
         } else {
-            const errorData = await res.json();
-            alert('Failed to create resource: ' + (errorData.error || 'Unknown error'));
+            mapContainer.style.display = 'none';
         }
     });
 }
 </script>
+{% endif %}
 {% endblock %}

@@ -16,13 +16,17 @@ class User(UserMixin, db.Model):
     phone_number = db.Column(db.String(20), nullable=True)
     is_email_verified = db.Column(db.Boolean, default=False)
     is_phone_verified = db.Column(db.Boolean, default=False)
-    is_premium_donor = db.Column(db.Boolean, default=False)
     verification_status = db.Column(db.Enum('pending', 'approved', 'rejected', name='verification_statuses'), default='pending',nullable=False)
     is_banned = db.Column(db.Boolean,default=False)
     trust_score = db.Column(db.Integer, default=0)
     points_balance = db.Column(db.Integer, default=0)
     badge_level = db.Column(db.Enum('None', 'Bronze', 'Silver', 'Gold', 'Platinum', name='badge_levels'), default='None')
     profile_photo = db.Column(db.String(255), nullable=True)
+    id_document = db.Column(db.String(255), nullable=True)
+    is_ngo = db.Column(db.Boolean, default=False)
+    ngo_name = db.Column(db.String(150), nullable=True)
+    ngo_description = db.Column(db.Text, nullable=True)
+    upi_id = db.Column(db.String(100), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     resources = db.relationship('Resource', backref='donor', lazy=True)
@@ -61,7 +65,6 @@ class Resource(db.Model):
     location_lng = db.Column(db.Float, nullable=True)
     address = db.Column(db.String(255), nullable=True)
     status = db.Column(db.Enum('Available', 'Requested', 'Fulfilled', name='resource_statuses'), default='Available')
-    is_premium = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -76,8 +79,8 @@ class Request(db.Model):
     status = db.Column(db.Enum('Pending', 'Accepted', 'Rejected', 'Fulfilled', name='request_statuses'), default='Pending')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
     history = db.relationship('DonationHistory', backref='request', uselist=False, lazy=True)
+    messages = db.relationship('Message', backref='request', lazy=True, cascade="all, delete-orphan")
 
 class DonationHistory(db.Model):
     __tablename__ = 'donation_history'
@@ -97,3 +100,14 @@ class PointsTransaction(db.Model):
     transaction_type = db.Column(db.Enum('Earned', 'Spent', name='transaction_types'), nullable=False)
     description = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Message(db.Model):
+    __tablename__ = 'messages'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    request_id = db.Column(db.Integer, db.ForeignKey('requests.id'), nullable=False)
+    sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    sender = db.relationship('User', foreign_keys=[sender_id])

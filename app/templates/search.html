@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% block title %}Search Resources - Donation Tracker{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+        <h2 class="fw-bold text-gradient mb-1">Search Resources</h2>
+        <p class="text-muted">Find available donations near you.</p>
+    </div>
+</div>
+
+<div class="row" data-aos="fade-up" data-aos-delay="100">
+    <!-- Filters Sidebar -->
+    <div class="col-md-3">
+        <div class="search-panel shadow-sm border-0">
+            <h5 class="fw-bold mb-3">Filters</h5>
+            <form id="searchForm">
+                <div class="mb-3">
+                    <label class="form-label">Category</label>
+                    <select class="form-select" id="category">
+                        <option value="">All Categories</option>
+                        <option value="Food">Food</option>
+                        <option value="Clothing">Clothing</option>
+                        <option value="Electronics">Electronics</option>
+                        <option value="Books">Books</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Condition</label>
+                    <select class="form-select" id="condition">
+                        <option value="">Any Condition</option>
+                        <option value="New">New</option>
+                        <option value="Like New">Like New</option>
+                        <option value="Good">Good</option>
+                        <option value="Fair">Fair</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Radius (km)</label>
+                    <input type="number" class="form-control" id="radius" value="10" min="1" max="500">
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+            </form>
+        </div>
+        
+        <!-- Results List -->
+        <div id="resultsList" class="mt-4">
+            <p class="text-muted text-center">Loading resources...</p>
+        </div>
+    </div>
+
+    <!-- Map View -->
+    <div class="col-md-9">
+        <div id="map"></div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    let map = L.map('map').setView([0, 0], 2); // Default center
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    let markers = L.layerGroup().addTo(map);
+    let userCircle = null;
+    let userLat = null;
+    let userLng = null;
+
+    // Get user location
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                userLat = position.coords.latitude;
+                userLng = position.coords.longitude;
+                map.setView([userLat, userLng], 12);
+                
+                // Add marker for user
+                L.circleMarker([userLat, userLng], {
+                    color: 'blue', radius: 8, fillOpacity: 1
+                }).addTo(map).bindPopup("<b>You are here</b>");
+
+                fetchResources();
+            },
+            () => {
+                alert("Geolocation failed. Showing all global resources.");
+                fetchResources();
+            }
+        );
+    } else {
+        fetchResources();
+    }
+
+    // Form Submission
+    document.getElementById('searchForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        fetchResources();
+    });
+
+    function fetchResources() {
+        const category = document.getElementById('category').value;
+        const condition = document.getElementById('condition').value;
+        const radius = document.getElementById('radius').value;
+
+        let url = `/search/api/resources?`;
+        if (category) url += `category=${category}&`;
+        if (condition) url += `condition=${condition}&`;
+        if (radius && userLat && userLng) url += `radius=${radius}&lat=${userLat}&lng=${userLng}`;
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                markers.clearLayers();
+                if(userCircle) {
+                    map.removeLayer(userCircle);
+                }
+
+                // Draw radius circle
+                if(radius && userLat && userLng) {
+                    userCircle = L.circle([userLat, userLng], {
+                        color: 'green',
+                        fillColor: '#3f0',
+                        fillOpacity: 0.1,
+                        radius: radius * 1000 // meters
+                    }).addTo(map);
+                }
+
+                const listContainer = document.getElementById('resultsList');
+                listContainer.innerHTML = '';
+
+                if(data.length === 0) {
+                    listContainer.innerHTML = '<p class="text-muted text-center">No resources found in this area.</p>';
+                    return;
+                }
+
+                data.forEach(r => {
+                    // Map Marker
+                    if(r.lat && r.lng) {
+                        const marker = L.marker([r.lat, r.lng]).addTo(markers);
+                        marker.bindPopup(`
+                            <b>${r.title}</b><br>
+                            ${r.category} - ${r.condition}<br>
+                            ${r.distance_km ? r.distance_km + ' km away' : ''}<br>
+                            <form method="POST" action="/request/${r.id}/send" class="mt-2">
+                                <button class="btn btn-sm btn-success w-100">Request Item</button>
+                            </form>
+                        `);
+                    }
+
+                    // List Item
+                    const distText = r.distance_km ? `<span class="badge bg-secondary mb-2">${r.distance_km} km away</span>` : '';
+                    
+                    listContainer.innerHTML += `
+                        <div class="card mb-3 shadow-sm border-0">
+                            <div class="card-body p-3">
+                                <h6 class="fw-bold mb-1">${r.title}</h6>
+                                <p class="text-muted small mb-2">${r.category} • ${r.condition}</p>
+                                ${distText}
+                                <form method="POST" action="/request/${r.id}/send">
+                                    <button class="btn btn-sm btn-outline-success w-100">Request</button>
+                                </form>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+    }
+});
+</script>
+{% endblock %}

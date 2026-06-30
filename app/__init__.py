@@ -36,6 +36,8 @@ def create_app(config_class=Config):
     from app.core.auth_routes import auth_bp
     from app.core.admin_routes import admin_bp
     from app.core.profile_routes import profile_bp
+    from app.core.search_routes import search_bp
+    from app.core.request_routes import request_bp
     
     app.register_blueprint(resource_bp)
     app.register_blueprint(history_bp)
@@ -44,5 +46,7 @@ def create_app(config_class=Config):
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(profile_bp)
+    app.register_blueprint(search_bp)
+    app.register_blueprint(request_bp)
 
     return app

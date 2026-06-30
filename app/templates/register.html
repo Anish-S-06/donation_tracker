@@ -25,7 +25,26 @@
                         <select name="role" id="roleSelect" class="form-select rounded-3 py-2" required>
                             <option value="donor" selected>Donor (I want to share resources)</option>
                             <option value="receiver">Receiver (I need resources)</option>
+                            <option value="ngo">NGO (I want to receive direct funds via UPI)</option>
                         </select>
+                    </div>
+                    
+                    <!-- Extra NGO Fields (Hidden by default) -->
+                    <div id="ngoFields" style="display: none;" class="bg-light p-3 rounded-3 mb-3 border">
+                        <h6 class="fw-bold mb-3 text-primary">NGO Details</h6>
+                        <div class="mb-2">
+                            <label class="form-label fw-medium fs-7">NGO Name</label>
+                            <input type="text" name="ngo_name" id="ngo_name" class="form-control rounded-3 py-2 fs-7" placeholder="e.g. Global Heart Foundation">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label fw-medium fs-7">UPI ID</label>
+                            <input type="text" name="upi_id" id="upi_id" class="form-control rounded-3 py-2 fs-7" placeholder="e.g. ngo@upi">
+                            <div class="form-text text-muted" style="font-size: 0.7rem;">Required for direct donations.</div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label fw-medium fs-7">Mission / Description</label>
+                            <textarea name="ngo_description" id="ngo_description" class="form-control rounded-3 py-2 fs-7" rows="2" placeholder="Briefly describe your cause..."></textarea>
+                        </div>
                     </div>
                     
                     <div class="mb-3">
@@ -60,4 +79,28 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const roleSelect = document.getElementById('roleSelect');
+    const ngoFields = document.getElementById('ngoFields');
+    const ngoName = document.getElementById('ngo_name');
+    const upiId = document.getElementById('upi_id');
+    const ngoDesc = document.getElementById('ngo_description');
+
+    roleSelect.addEventListener('change', function() {
+        if (this.value === 'ngo') {
+            ngoFields.style.display = 'block';
+            ngoName.required = true;
+            upiId.required = true;
+            ngoDesc.required = true;
+        } else {
+            ngoFields.style.display = 'none';
+            ngoName.required = false;
+            upiId.required = false;
+            ngoDesc.required = false;
+        }
+    });
+});
+</script>
 {% endblock %}

@@ -1,8 +1,8 @@
-"""Initial migration
+"""Fresh Init
 
-Revision ID: 3ad09873c4e8
+Revision ID: c532ee21552f
 Revises: 
-Create Date: 2026-05-25 15:45:45.259206
+Create Date: 2026-06-08 15:11:05.954144
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '3ad09873c4e8'
+revision = 'c532ee21552f'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -22,8 +22,15 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('email', sa.String(length=120), nullable=False),
     sa.Column('password_hash', sa.String(length=128), nullable=False),
+    sa.Column('email_otp', sa.String(length=10), nullable=True),
+    sa.Column('otp_expiry', sa.DateTime(), nullable=True),
     sa.Column('role', sa.Enum('donor', 'receiver', 'admin', name='user_roles'), nullable=False),
-    sa.Column('is_verified', sa.Boolean(), nullable=True),
+    sa.Column('phone_number', sa.String(length=20), nullable=True),
+    sa.Column('is_email_verified', sa.Boolean(), nullable=True),
+    sa.Column('is_phone_verified', sa.Boolean(), nullable=True),
+    sa.Column('is_premium_donor', sa.Boolean(), nullable=True),
+    sa.Column('verification_status', sa.Enum('pending', 'approved', 'rejected', name='verification_statuses'), nullable=False),
+    sa.Column('is_banned', sa.Boolean(), nullable=True),
     sa.Column('trust_score', sa.Integer(), nullable=True),
     sa.Column('points_balance', sa.Integer(), nullable=True),
     sa.Column('badge_level', sa.Enum('None', 'Bronze', 'Silver', 'Gold', 'Platinum', name='badge_levels'), nullable=True),

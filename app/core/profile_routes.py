@@ -16,7 +16,20 @@ def allowed_file(filename):
 @profile_bp.route('/')
 @login_required
 def profile():
-    return render_template('profile.html')
+    from app.models import Request as DonationRequest, Resource
+    incoming_requests = []
+    outgoing_requests = []
+    resources = []
+    
+    if current_user.role == 'donor':
+        resources = Resource.query.filter_by(donor_id=current_user.id).all()
+        resource_ids = [r.id for r in resources]
+        if resource_ids:
+            incoming_requests = DonationRequest.query.filter(DonationRequest.resource_id.in_(resource_ids)).all()
+    elif current_user.role == 'receiver':
+        outgoing_requests = DonationRequest.query.filter_by(receiver_id=current_user.id).all()
+        
+    return render_template('profile.html', incoming_requests=incoming_requests, outgoing_requests=outgoing_requests, resources=resources)
 
 @profile_bp.route('/upload-photo', methods=['POST'])
 @login_required
@@ -63,4 +76,39 @@ def upload_photo():
         return redirect(url_for('profile_routes.profile'))
         
     flash('Allowed image types are png, jpg, jpeg, gif.', 'danger')
+    return redirect(url_for('profile_routes.profile'))
+
+@profile_bp.route('/upload-document', methods=['POST'])
+@login_required
+def upload_document():
+    if 'id_document' not in request.files:
+        flash('No file part.', 'danger')
+        return redirect(url_for('profile_routes.profile'))
+        
+    file = request.files['id_document']
+    if file.filename == '':
+        flash('No selected file.', 'danger')
+        return redirect(url_for('profile_routes.profile'))
+        
+    allowed_doc_exts = ALLOWED_EXTENSIONS.union({'pdf'})
+    ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+    
+    if file and ext in allowed_doc_exts:
+        upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'documents')
+        os.makedirs(upload_folder, exist_ok=True)
+        
+        filename = secure_filename(f"doc_{current_user.id}_{file.filename}")
+        filepath = os.path.join(upload_folder, filename)
+        
+        try:
+            file.save(filepath)
+            current_user.id_document = f"uploads/documents/{filename}"
+            db.session.commit()
+            flash('ID Document uploaded successfully. Awaiting admin review.', 'success')
+        except Exception as e:
+            flash(f'Failed to upload document: {e}', 'danger')
+            
+    else:
+        flash('Invalid file type. Allowed: PDF, JPG, PNG.', 'danger')
+        
     return redirect(url_for('profile_routes.profile'))
