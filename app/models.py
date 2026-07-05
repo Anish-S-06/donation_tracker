@@ -12,7 +12,7 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(128), nullable=False)
     email_otp = db.Column(db.String(10), nullable=True)
     otp_expiry = db.Column(db.DateTime, nullable=True)
-    role = db.Column(db.Enum('donor', 'receiver', 'admin', name='user_roles'), nullable=False)
+    role = db.Column(db.Enum('user', 'admin', name='user_roles'), nullable=False)
     phone_number = db.Column(db.String(20), nullable=True)
     is_email_verified = db.Column(db.Boolean, default=False)
     is_phone_verified = db.Column(db.Boolean, default=False)
@@ -26,6 +26,7 @@ class User(UserMixin, db.Model):
     is_ngo = db.Column(db.Boolean, default=False)
     ngo_name = db.Column(db.String(150), nullable=True)
     ngo_description = db.Column(db.Text, nullable=True)
+    ngo_image = db.Column(db.String(255), nullable=True)
     upi_id = db.Column(db.String(100), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -64,6 +65,7 @@ class Resource(db.Model):
     location_lat = db.Column(db.Float, nullable=True)
     location_lng = db.Column(db.Float, nullable=True)
     address = db.Column(db.String(255), nullable=True)
+    image = db.Column(db.String(255), nullable=True)
     status = db.Column(db.Enum('Available', 'Requested', 'Fulfilled', name='resource_statuses'), default='Available')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -111,3 +113,24 @@ class Message(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     sender = db.relationship('User', foreign_keys=[sender_id])
+
+class UPIDonationClick(db.Model):
+    __tablename__ = 'upi_donation_clicks'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    donor_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    ngo_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    donor = db.relationship('User', foreign_keys=[donor_id])
+    ngo = db.relationship('User', foreign_keys=[ngo_id])
+
+class NGOGalleryImage(db.Model):
+    __tablename__ = 'ngo_gallery_images'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    ngo_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    image_path = db.Column(db.String(255), nullable=False)
+    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    ngo = db.relationship('User', backref=db.backref('gallery_images', lazy=True))

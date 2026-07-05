@@ -1,15 +1,16 @@
 from flask import Blueprint, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from app import db
-from app.models import Resource, Request as DonationRequest, DonationHistory, User
+from app.models import Resource, Request as DonationRequest, DonationHistory, User, PointsTransaction
+from app.services.email_service import send_request_notification
 
 request_bp = Blueprint('request_routes', __name__, url_prefix='/request')
 
 @request_bp.route('/<int:resource_id>/send', methods=['POST'])
 @login_required
 def send_request(resource_id):
-    if current_user.role != 'receiver':
-        flash("Only verified receivers can request resources.", "danger")
+    if current_user.is_ngo:
+        flash("NGOs cannot request resources.", "danger")
         return redirect(url_for('search_routes.search_page'))
         
     if current_user.verification_status != 'approved':
@@ -25,6 +26,19 @@ def send_request(resource_id):
     db.session.add(req)
     db.session.commit()
     
+    try:
+        donor = resource.donor
+        request_url = url_for('profile_routes.profile', _external=True)
+        send_request_notification(
+            donor_email=donor.email,
+            donor_name=donor.email.split('@')[0],
+            receiver_name=current_user.email.split('@')[0],
+            resource_title=resource.title,
+            request_url=request_url
+        )
+    except Exception as e:
+        print(f"Background email failed: {e}")
+    
     flash("Request sent successfully!", "success")
     return redirect(url_for('search_routes.search_page'))
 
@@ -39,10 +53,8 @@ def accept_request(req_id):
     req.status = 'Accepted'
     req.resource.status = 'Requested'
     
-    other_reqs = DonationRequest.query.filter_by(resource_id=req.resource_id, status='Pending').all()
-    for o_req in other_reqs:
-        if o_req.id != req.id:
-            o_req.status = 'Rejected'
+    # We no longer auto-reject other pending requests here.
+    # They stay pending so they can be accepted later if this transaction fails.
             
     db.session.commit()
     flash("Request accepted. Please arrange exchange.", "success")
@@ -60,6 +72,20 @@ def reject_request(req_id):
     db.session.commit()
     flash("Request rejected.", "warning")
     return redirect(url_for('profile_routes.profile'))
+@request_bp.route('/<int:req_id>/unfulfill', methods=['POST'])
+@login_required
+def unfulfill_request(req_id):
+    req = db.session.get(DonationRequest, req_id)
+    if not req or req.resource.donor_id != current_user.id:
+        flash("Unauthorized.", "danger")
+        return redirect(url_for('profile_routes.profile'))
+        
+    req.status = 'Rejected'
+    req.resource.status = 'Available'
+    
+    db.session.commit()
+    flash("Request unfulfilled. Resource is available for other users again.", "info")
+    return redirect(url_for('profile_routes.profile'))
 
 @request_bp.route('/<int:req_id>/fulfill', methods=['POST'])
 @login_required
@@ -75,8 +101,30 @@ def fulfill_request(req_id):
     history = DonationHistory(request_id=req.id)
     db.session.add(history)
     
+    # --- Karma Points Logic ---
+    points_awarded = 50
+    pt = PointsTransaction(
+        user_id=current_user.id,
+        amount=points_awarded,
+        transaction_type='Earned',
+        description=f"Fulfilled request for {req.resource.title}"
+    )
+    db.session.add(pt)
+    
+    current_user.points_balance += points_awarded
+    
+    # Calculate new badge level
+    if current_user.points_balance >= 5000:
+        current_user.badge_level = 'Platinum'
+    elif current_user.points_balance >= 1000:
+        current_user.badge_level = 'Gold'
+    elif current_user.points_balance >= 500:
+        current_user.badge_level = 'Silver'
+    elif current_user.points_balance >= 100:
+        current_user.badge_level = 'Bronze'
+    
     db.session.commit()
-    flash("Donation fulfilled! You can now rate the receiver.", "success")
+    flash(f"Donation fulfilled! You earned {points_awarded} Karma Points. You can now rate the receiver.", "success")
     return redirect(url_for('profile_routes.profile'))
 
 @request_bp.route('/history/<int:history_id>/rate', methods=['POST'])

@@ -7,6 +7,36 @@
 
 {% block content %}
 
+<!-- 🏆 Gamification Leaderboard -->
+{% if top_donors and top_donors|length > 0 and top_donors[0].points_balance > 0 %}
+<div class="row mb-5" data-aos="fade-down">
+    <div class="col-12">
+        <div class="premium-card p-4 rounded-4 border-0 shadow-sm" style="background: linear-gradient(145deg, var(--card-bg), rgba(231, 111, 81, 0.05));">
+            <h4 class="fw-bold mb-4 text-center">🏆 Top Donors of the Month</h4>
+            <div class="d-flex flex-wrap justify-content-center gap-3">
+                {% for donor in top_donors %}
+                {% if donor.points_balance > 0 %}
+                <div class="d-flex align-items-center rounded-pill px-4 py-2 border shadow-sm kpi-card" style="background: var(--input-bg);">
+                    <div class="fs-3 me-2">
+                        {% if donor.badge_level == 'Platinum' %}💎
+                        {% elif donor.badge_level == 'Gold' %}🥇
+                        {% elif donor.badge_level == 'Silver' %}🥈
+                        {% elif donor.badge_level == 'Bronze' %}🥉
+                        {% else %}⭐{% endif %}
+                    </div>
+                    <div>
+                        <div class="fw-bold fs-6 lh-1">{{ donor.email.split('@')[0] }}</div>
+                        <div class="text-primary fw-medium fs-7">{{ donor.points_balance }} Karma</div>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <!-- Hero Section for Non-Logged In Users -->
 {% if not current_user.is_authenticated %}
 <!-- Guest Landing Page: Direct NGO Donations -->
@@ -28,22 +58,49 @@
             <div class="card premium-card h-100 border-0 shadow-sm p-3">
                 <div class="card-body d-flex flex-column">
                     <div class="d-flex align-items-center mb-3">
-                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                        {% if ngo.ngo_image %}
+                        <img src="{{ url_for('static', filename=ngo.ngo_image) }}" alt="NGO Profile" class="rounded-circle me-3 object-fit-cover shadow-sm border" style="width: 50px; height: 50px;">
+                        {% else %}
+                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3 border" style="width: 50px; height: 50px;">
                             <i class="fs-4">🤝</i>
                         </div>
+                        {% endif %}
                         <h5 class="fw-bold text-dark mb-0">{{ ngo.ngo_name or ngo.email }}</h5>
                     </div>
                     <p class="text-muted fs-7 mb-4 flex-grow-1">{{ ngo.ngo_description or 'Working towards a better community.' }}</p>
                     
+                    {% if ngo.gallery_images %}
+                    <div id="carouselNGO{{ ngo.id }}" class="carousel slide mb-3 rounded-3 overflow-hidden shadow-sm border" data-bs-ride="carousel">
+                        <div class="carousel-inner">
+                            {% for img in ngo.gallery_images %}
+                            <div class="carousel-item {% if loop.first %}active{% endif %}">
+                                <img src="{{ url_for('static', filename=img.image_path) }}" class="d-block w-100 object-fit-cover" style="height: 180px;" alt="Gallery">
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#carouselNGO{{ ngo.id }}" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Previous</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#carouselNGO{{ ngo.id }}" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Next</span>
+                        </button>
+                    </div>
+                    {% endif %}
+                    
                     {% if ngo.upi_id %}
                         <!-- Mobile UPI deep link -->
-                        <a href="upi://pay?pa={{ ngo.upi_id }}&pn={{ ngo.ngo_name or 'NGO' }}&cu=INR" class="btn btn-gradient-primary w-100 py-2 rounded-pill fw-bold mb-3 d-md-none">
+                        <a href="upi://pay?pa={{ ngo.upi_id }}&pn={{ ngo.ngo_name or 'NGO' }}&cu=INR" class="btn btn-gradient-primary w-100 py-2 rounded-pill fw-bold mb-3 d-md-none" onclick="trackUPIClick({{ ngo.id }})">
                             Donate via UPI App
                         </a>
-                        <!-- Desktop copy/display -->
-                        <div class="bg-light rounded-3 p-3 text-center border mt-auto">
-                            <span class="fs-7 text-muted d-block mb-1 text-uppercase fw-bold">Direct UPI ID</span>
-                            <strong class="text-primary fs-5">{{ ngo.upi_id }}</strong>
+                        <!-- Desktop QR Code & ID (Hidden on mobile) -->
+                        <div class="bg-white rounded-3 p-3 text-center border mt-auto d-none d-md-block shadow-sm upi-container" onclick="trackUPIClick({{ ngo.id }})" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                            <span class="fs-7 text-muted d-block mb-2 text-uppercase fw-bold">Scan to Donate</span>
+                            <div class="d-flex justify-content-center mb-2">
+                                <div class="upi-qr-code" data-upi="upi://pay?pa={{ ngo.upi_id }}&pn={{ ngo.ngo_name or 'NGO' }}&cu=INR"></div>
+                            </div>
+                            <strong class="text-primary fs-6">{{ ngo.upi_id }}</strong>
                         </div>
                     {% else %}
                         <button class="btn btn-secondary w-100 py-2 rounded-pill fw-bold disabled mt-auto">UPI Not Available</button>
@@ -84,19 +141,13 @@
 <div class="row" data-aos="fade-up">
     <!-- Left Column: Create Resource (Conditional) -->
     <div class="col-md-4 mb-4">
-        {% if current_user.role == 'donor' %}
+        {% if not current_user.is_ngo %}
             <div class="card premium-card border-0 p-3 shadow-sm">
                 <div class="card-body">
                     <h5 class="fw-bold mb-1 text-gradient">Create Resource</h5>
                     <p class="text-muted fs-7 mb-3">Share a new item with the community</p>
                     
-                    {% if current_user.verification_status != 'approved' %}
-                        <div class="alert alert-danger fs-7 py-2 rounded-3 shadow-sm">
-                            <strong>Notice:</strong> Your donor account is pending Admin approval. You cannot list resources yet. <a href="{{ url_for('profile_routes.profile') }}" class="alert-link">Upload your ID Document in your profile</a> to speed up the process.
-                        </div>
-                    {% endif %}
-                    
-                    <form id="resourceForm" {% if current_user.verification_status != 'approved' %}style="opacity: 0.5; pointer-events: none;"{% endif %}>
+                    <form id="resourceForm">
                         <input type="hidden" id="donor_id" value="{{ current_user.id }}">
                         
                         <div class="mb-3">
@@ -132,6 +183,11 @@
                         </div>
                         
                         <div class="mb-3">
+                            <label class="form-label fw-medium fs-7">Photo (Optional)</label>
+                            <input class="form-control rounded-3 bg-light border-0 py-2" type="file" id="resourceImage" accept="image/*">
+                        </div>
+                        
+                        <div class="mb-3">
                             <label class="form-label fw-medium fs-7">Pickup Address (Optional)</label>
                             <div class="input-group mb-2">
                                 <input type="text" class="form-control bg-light border-0 px-3 py-2" id="address" placeholder="e.g. 123 Main St, City">
@@ -157,16 +213,18 @@
                 </div>
             </div>
             
-        {% elif current_user.role == 'receiver' %}
-            <div class="card premium-card border-0 p-4 text-center shadow-sm">
+        {% if not current_user.is_ngo %}
+            <!-- Find Donations Card for Users -->
+            <div class="card premium-card border-0 p-4 mt-4 text-center shadow-sm">
                <div class="card-body">
                   <h5 class="fw-bold mb-3">Find Donations</h5>
                   <p class="text-muted mb-4">
                      Ready to find what you need? Open the interactive map to search for items near you!
                   </p>
-                  <a href="{{ url_for('search_routes.search_page') }}" class="btn btn-gradient-primary w-100 py-2 rounded-pill fw-bold shadow-sm">Open Search Map</a>
+                  <a href="{{ url_for('search_routes.search_page') }}" class="btn btn-gradient-secondary w-100 py-2 rounded-pill fw-bold shadow-sm">Open Search Map</a>
              </div>
           </div>
+        {% endif %}
         {% elif current_user.role == 'admin' %}
              <div class="card premium-card border-0 p-4 text-center shadow-sm">
                <div class="card-body">
@@ -192,6 +250,10 @@
                     <a href="{{ url_for('search_routes.search_page') }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">View Map</a>
                 </div>
                 
+                <div class="mb-3">
+                    <input type="text" id="dashboardSearch" class="form-control rounded-pill bg-light border-0 px-4 py-2" placeholder="Search by title, category, or description...">
+                </div>
+                
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
                         <thead class="table-light">
@@ -200,20 +262,40 @@
                                 <th>Category</th>
                                 <th>Condition</th>
                                 <th>Status</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody id="resourceTable">
                             {% for r in resources %}
-                            <tr>
-                                <td>
-                                    <div class="fw-bold text-dark">
-                                        {{ r.title }}
+                            <tr class="resource-row"
+                                data-title="{{ r.title }}"
+                                data-desc="{{ r.description }}"
+                                data-cat="{{ r.category }}"
+                                data-cond="{{ r.condition }}"
+                                data-addr="{{ r.address if r.address else 'No address provided' }}"
+                                data-lat="{{ r.location_lat }}"
+                                data-lng="{{ r.location_lng }}"
+                                data-img="{{ r.image if r.image else '' }}">
+                                <td onclick="openResourceModal(this)" style="cursor: pointer;">
+                                    <div class="d-flex align-items-center">
+                                        {% if r.image %}
+                                        <img src="{{ url_for('static', filename=r.image) }}" alt="Item" class="rounded-3 me-3 object-fit-cover border" style="width: 50px; height: 50px;">
+                                        {% else %}
+                                        <div class="bg-light border rounded-3 d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                            <i class="fs-4 text-muted">📦</i>
+                                        </div>
+                                        {% endif %}
+                                        <div>
+                                            <div class="fw-bold text-dark">
+                                                {{ r.title }}
+                                            </div>
+                                            <div class="text-muted fs-7 text-truncate" style="max-width: 200px;">{{ r.description }}</div>
+                                        </div>
                                     </div>
-                                    <div class="text-muted fs-7 text-truncate" style="max-width: 250px;">{{ r.description }}</div>
                                 </td>
-                                <td><span class="badge bg-light text-dark border">{{ r.category }}</span></td>
-                                <td><span class="text-muted fs-7">{{ r.condition }}</span></td>
-                                <td>
+                                <td onclick="openResourceModal(this)" style="cursor: pointer;"><span class="badge bg-light text-dark border">{{ r.category }}</span></td>
+                                <td onclick="openResourceModal(this)" style="cursor: pointer;"><span class="text-muted fs-7">{{ r.condition }}</span></td>
+                                <td onclick="openResourceModal(this)" style="cursor: pointer;">
                                     {% if r.status == 'Available' %}
                                         <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">{{ r.status }}</span>
                                     {% elif r.status == 'Requested' %}
@@ -222,10 +304,21 @@
                                         <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25">{{ r.status }}</span>
                                     {% endif %}
                                 </td>
+                                <td>
+                                    {% if not current_user.is_ngo and current_user.role != 'admin' and r.status == 'Available' and r.donor_id != current_user.id %}
+                                    <form method="POST" action="{{ url_for('request_routes.send_request', resource_id=r.id) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3">Request</button>
+                                    </form>
+                                    {% elif r.donor_id == current_user.id %}
+                                    <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 disabled">Yours</button>
+                                    {% else %}
+                                        <span class="text-muted fs-7">-</span>
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% else %}
                             <tr>
-                                <td colspan="4" class="text-center text-muted py-5">
+                                <td colspan="5" class="text-center text-muted py-5">
                                     <div class="mb-3" style="font-size: 2rem;">📭</div>
                                     <h6 class="fw-bold text-dark">No resources found</h6>
                                     <p class="fs-7 mb-0">Be the first to list an item on the platform!</p>
@@ -242,13 +335,58 @@
 
 {% endif %}
 
-
+<!-- Resource Detail Modal -->
+<div class="modal fade" id="resourceDetailModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+      <div class="modal-header border-bottom-0 pb-0 mt-2">
+        <h5 class="modal-title fw-bold fs-4" id="modalTitle"></h5>
+        <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body pt-3">
+        <img id="modalImg" src="" alt="Resource Image" class="img-fluid rounded-3 shadow-sm mb-3 w-100 object-fit-cover" style="max-height: 250px; display: none;">
+        <div class="d-flex gap-2 mb-3">
+            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25" id="modalCat"></span>
+            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25" id="modalCond"></span>
+        </div>
+        <p class="text-dark mb-4 fs-6" id="modalDesc" style="white-space: pre-wrap;"></p>
+        
+        <div class="bg-light rounded-3 p-3 border">
+            <div class="fs-7 text-muted fw-bold text-uppercase mb-1">📍 Pick-up Address</div>
+            <div class="text-dark fw-medium" id="modalAddr"></div>
+        </div>
+      </div>
+      <div class="modal-footer border-top-0 pt-0 mb-2">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 {% endblock %}
 
 {% block extra_js %}
+<!-- QRCode.js Library for frontend QR generation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Generate QR codes for all NGO cards
+    const qrContainers = document.querySelectorAll('.upi-qr-code');
+    qrContainers.forEach(container => {
+        const upiString = container.getAttribute('data-upi');
+        new QRCode(container, {
+            text: upiString,
+            width: 120,
+            height: 120,
+            colorDark : "#2A9D8F",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.M
+        });
+    });
+});
+</script>
 
-{% if current_user.is_authenticated and current_user.role == 'donor' %}
+{% if current_user.is_authenticated and not current_user.is_ngo %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const form = document.getElementById('resourceForm');
@@ -256,22 +394,49 @@ if (form) {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        const data = {
-            donor_id: parseInt(document.getElementById('donor_id').value),
-            title: document.getElementById('title').value,
-            description: document.getElementById('description').value,
-            category: document.getElementById('category').value,
-            condition: document.getElementById('condition').value,
-            address: document.getElementById('address') ? document.getElementById('address').value : null,
-            location_lat: document.getElementById('location_lat') && document.getElementById('location_lat').value ? parseFloat(document.getElementById('location_lat').value) : null,
-            location_lng: document.getElementById('location_lng') && document.getElementById('location_lng').value ? parseFloat(document.getElementById('location_lng').value) : null
-        };
+        // Show loading state on button
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerText;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+        submitBtn.disabled = true;
+        
+        let finalLat = document.getElementById('location_lat') && document.getElementById('location_lat').value ? parseFloat(document.getElementById('location_lat').value) : null;
+        let finalLng = document.getElementById('location_lng') && document.getElementById('location_lng').value ? parseFloat(document.getElementById('location_lng').value) : null;
+        const typedAddress = document.getElementById('address') ? document.getElementById('address').value.trim() : '';
+
+        // Forward Geocoding: If they typed an address but didn't use GPS/Map, we fetch coordinates for them!
+        if (typedAddress && (!finalLat || !finalLng)) {
+            try {
+                const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(typedAddress)}`);
+                const geoData = await geoRes.json();
+                if (geoData && geoData.length > 0) {
+                    finalLat = parseFloat(geoData[0].lat);
+                    finalLng = parseFloat(geoData[0].lon);
+                }
+            } catch (err) {
+                console.error("Geocoding failed, continuing without precise map coordinates", err);
+            }
+        }
+
+        const formData = new FormData();
+        formData.append('donor_id', document.getElementById('donor_id').value);
+        formData.append('title', document.getElementById('title').value);
+        formData.append('description', document.getElementById('description').value);
+        formData.append('category', document.getElementById('category').value);
+        formData.append('condition', document.getElementById('condition').value);
+        formData.append('address', typedAddress);
+        if (finalLat) formData.append('location_lat', finalLat);
+        if (finalLng) formData.append('location_lng', finalLng);
+        
+        const imageFile = document.getElementById('resourceImage').files[0];
+        if (imageFile) {
+            formData.append('image', imageFile);
+        }
         
         try {
             const res = await fetch('/resources/', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
+                body: formData
             });
             
             if (res.ok) {
@@ -300,9 +465,13 @@ if (form) {
                 } else {
                     alert('Failed to create resource: ' + (errorData.error || 'Unknown error'));
                 }
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
             }
         } catch (error) {
             console.error("Error creating resource", error);
+            submitBtn.innerHTML = originalBtnText;
+            submitBtn.disabled = false;
         }
     });
 }
@@ -411,6 +580,82 @@ if (showMapBtn) {
         }
     });
 }
+
+async function trackUPIClick(ngoId) {
+    try {
+        await fetch(`/profile/api/track-upi-click/${ngoId}`, { method: 'POST' });
+    } catch(e) {
+        console.error('Tracking failed', e);
+    }
+}
 </script>
 {% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('dashboardSearch');
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function() {
+            const filter = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#resourceTable tr:not(.empty-state)');
+            let hasVisible = false;
+            
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                if (text.includes(filter)) {
+                    row.style.display = '';
+                    hasVisible = true;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            let emptyMsg = document.getElementById('noResultsRow');
+            if (!hasVisible && filter.trim() !== '') {
+                if (!emptyMsg) {
+                    const tbody = document.getElementById('resourceTable');
+                    emptyMsg = document.createElement('tr');
+                    emptyMsg.id = 'noResultsRow';
+                    emptyMsg.innerHTML = '<td colspan="5" class="text-center text-muted py-4">No matching resources found.</td>';
+                    tbody.appendChild(emptyMsg);
+                }
+                emptyMsg.style.display = '';
+            } else if (emptyMsg) {
+                emptyMsg.style.display = 'none';
+            }
+        });
+    }
+});
+
+function openResourceModal(tdElement) {
+    const row = tdElement.closest('tr');
+    document.getElementById('modalTitle').textContent = row.getAttribute('data-title');
+    document.getElementById('modalDesc').textContent = row.getAttribute('data-desc');
+    document.getElementById('modalCat').textContent = row.getAttribute('data-cat');
+    document.getElementById('modalCond').textContent = row.getAttribute('data-cond');
+    
+    const imgPath = row.getAttribute('data-img');
+    const modalImg = document.getElementById('modalImg');
+    if (imgPath) {
+        modalImg.src = "/static/" + imgPath;
+        modalImg.style.display = 'block';
+    } else {
+        modalImg.style.display = 'none';
+        modalImg.src = '';
+    }
+    
+    const lat = row.getAttribute('data-lat');
+    const lng = row.getAttribute('data-lng');
+    const addr = row.getAttribute('data-addr');
+    
+    let addrHtml = addr;
+    if (lat && lat !== 'None' && lng && lng !== 'None') {
+        addrHtml += `<div class="mt-2"><a href="https://www.google.com/maps/search/?api=1&query=${lat},${lng}" target="_blank" class="badge bg-primary text-white text-decoration-none py-2 px-3 shadow-sm"><i class="bi bi-map me-1"></i> View on Google Maps</a></div>`;
+    }
+    document.getElementById('modalAddr').innerHTML = addrHtml;
+    
+    const modal = new bootstrap.Modal(document.getElementById('resourceDetailModal'));
+    modal.show();
+}
+</script>
 {% endblock %}

@@ -13,23 +13,25 @@
     --table-row-bg: #ffffff;
     --muted-text: #6c757d;
     --border-subtle: rgba(231, 111, 81, 0.08);
+    --shadow-color: rgba(231, 111, 81, 0.04);
+    --shadow-hover: rgba(231, 111, 81, 0.08);
 }
 
-@media (prefers-color-scheme: dark) {
-    :root {
-        /* Dark Theme overrides */
-        --bg-color: #1a1e23;
-        --text-color: #f1f5f9;
-        --card-bg: rgba(36, 44, 52, 0.85);
-        --card-border: rgba(255, 255, 255, 0.05);
-        --nav-bg: rgba(36, 44, 52, 0.8);
-        --nav-link: #cbd5e1;
-        --input-bg: rgba(26, 30, 35, 0.8);
-        --input-border: rgba(255, 255, 255, 0.1);
-        --table-row-bg: #242c34;
-        --muted-text: #94a3b8;
-        --border-subtle: rgba(255, 255, 255, 0.05);
-    }
+[data-bs-theme="dark"] {
+    /* Dark Theme overrides for Glassmorphism */
+    --bg-color: #0f1115;
+    --text-color: #f1f5f9;
+    --card-bg: rgba(25, 30, 35, 0.75);
+    --card-border: rgba(255, 255, 255, 0.08);
+    --nav-bg: rgba(15, 17, 21, 0.85);
+    --nav-link: #cbd5e1;
+    --input-bg: rgba(20, 24, 28, 0.7);
+    --input-border: rgba(255, 255, 255, 0.15);
+    --table-row-bg: rgba(35, 40, 45, 0.6);
+    --muted-text: #94a3b8;
+    --border-subtle: rgba(255, 255, 255, 0.05);
+    --shadow-color: rgba(0, 0, 0, 0.2);
+    --shadow-hover: rgba(0, 0, 0, 0.4);
 }
 
 /* Base & Typography */
@@ -78,14 +80,14 @@ body {
     -webkit-backdrop-filter: blur(16px);
     border-radius: 20px;
     border: 1px solid var(--card-border);
-    box-shadow: 0 10px 40px rgba(231, 111, 81, 0.04);
+    box-shadow: 0 10px 40px var(--shadow-color);
     transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
     overflow: hidden;
 }
 
 .premium-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 15px 50px rgba(231, 111, 81, 0.08);
+    box-shadow: 0 15px 50px var(--shadow-hover);
 }
 
 /* KPI Cards (Admin Dashboard) */

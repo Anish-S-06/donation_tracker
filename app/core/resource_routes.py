@@ -3,6 +3,14 @@ from flask_login import current_user
 from . import resource_bp
 from app.models import Resource, User
 from app import db
+import os
+from werkzeug.utils import secure_filename
+from PIL import Image
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @resource_bp.route('/', methods=['GET'])
 def get_resources():
@@ -29,9 +37,11 @@ def get_resources():
     return jsonify(result), 200
 
 @resource_bp.route('/', methods=['POST'])
-@resource_bp.route('/', methods=['POST'])
 def create_resource():
-    data = request.json
+    if request.is_json:
+        data = request.json
+    else:
+        data = request.form
 
     if not current_user.is_authenticated:
         return jsonify({'error': 'Login required'}), 401
@@ -41,21 +51,50 @@ def create_resource():
     if not donor:
         return jsonify({'error': 'Donor not found'}), 404
 
-    if donor.role != 'donor':
-        return jsonify({'error': 'Only donors allowed'}), 403
+    if donor.is_ngo:
+        return jsonify({'error': 'NGOs cannot post resources'}), 403
 
     if not donor.is_email_verified:
         return jsonify({'error': 'Email not verified'}), 403
 
+    image_path = None
+    if 'image' in request.files:
+        file = request.files['image']
+        if file and file.filename != '' and allowed_file(file.filename):
+            upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'resources')
+            os.makedirs(upload_folder, exist_ok=True)
+            
+            ext = file.filename.rsplit('.', 1)[1].lower()
+            import time
+            filename = secure_filename(f"res_{donor.id}_{int(time.time())}.{ext}")
+            filepath = os.path.join(upload_folder, filename)
+            
+            try:
+                image = Image.open(file)
+                # Ensure RGBA is converted to RGB if saving as JPEG
+                if image.mode in ('RGBA', 'P') and ext in ['jpg', 'jpeg']:
+                    image = image.convert('RGB')
+                image.thumbnail((800, 800))
+                
+                if ext in ['jpg', 'jpeg']:
+                    image.save(filepath, 'JPEG', optimize=True, quality=80)
+                else:
+                    image.save(filepath, optimize=True)
+                    
+                image_path = f"uploads/resources/{filename}"
+            except Exception as e:
+                return jsonify({'error': f'Failed to process image: {str(e)}'}), 500
+
     new_resource = Resource(
         donor_id=donor.id,
-        title=data['title'],
-        description=data['description'],
-        category=data['category'],
-        condition=data['condition'],
+        title=data.get('title'),
+        description=data.get('description'),
+        category=data.get('category'),
+        condition=data.get('condition'),
         address=data.get('address'),
         location_lat=data.get('location_lat'),
-        location_lng=data.get('location_lng')
+        location_lng=data.get('location_lng'),
+        image=image_path
     )
 
     db.session.add(new_resource)

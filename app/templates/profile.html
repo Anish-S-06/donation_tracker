@@ -27,6 +27,16 @@
 
                 <div class="mb-3">
                     <span class="badge bg-primary text-capitalize">{{ current_user.role }}</span>
+                    {% if current_user.role == 'user' %}
+                    <span class="badge border border-warning text-body ms-1" style="background-color: rgba(255, 193, 7, 0.2);">
+                        {% if current_user.badge_level == 'Platinum' %}💎
+                        {% elif current_user.badge_level == 'Gold' %}🥇
+                        {% elif current_user.badge_level == 'Silver' %}🥈
+                        {% elif current_user.badge_level == 'Bronze' %}🥉
+                        {% else %}⭐{% endif %}
+                        {{ current_user.points_balance }} Karma
+                    </span>
+                    {% endif %}
                 </div>
 
                 <hr class="my-4">
@@ -66,6 +76,24 @@
                     <div class="mt-3 text-start">
                         <small class="text-success fw-bold"><i class="bi bi-check-circle"></i> Document Uploaded</small>
                     </div>
+                {% endif %}
+                
+                {% if current_user.is_ngo %}
+                <hr class="my-4">
+                <!-- UPLOAD NGO BANNER -->
+                <h6 class="fw-bold text-start mb-3">Upload NGO Display Photo</h6>
+                <form action="{{ url_for('profile_routes.upload_ngo_photo') }}"
+                      method="POST"
+                      enctype="multipart/form-data">
+                    <input class="form-control form-control-sm mb-2"
+                           type="file"
+                           name="ngo_photo"
+                           accept="image/*"
+                           required>
+                    <button class="btn btn-primary btn-sm w-100">
+                        Upload NGO Photo
+                    </button>
+                </form>
                 {% endif %}
 
             </div>
@@ -110,24 +138,23 @@
                 <div class="col-sm-4 mb-3">
                     <h6 class="text-muted">Admin Approval</h6>
 
-                    {% if current_user.role == 'donor' %}
-
                         {% if current_user.verification_status == 'approved' %}
-                            <span class="badge bg-success">Approved Donor</span>
+                            <span class="badge bg-success">Verified Community Member</span>
 
                         {% elif current_user.verification_status == 'rejected' %}
                             <span class="badge bg-danger">Rejected</span>
 
-                        {% else %}
+                        {% elif current_user.id_document %}
                             <span class="badge bg-warning">Pending Admin</span>
                             <div class="small text-muted mt-1">
-                                Admin approval required to list resources
+                                Admin approval required to request items
+                            </div>
+                        {% else %}
+                            <span class="badge bg-light text-dark border">Not Verified</span>
+                            <div class="small text-muted mt-1">
+                                ID required to request items
                             </div>
                         {% endif %}
-
-                    {% else %}
-                        <span class="badge bg-light text-muted">Not Required</span>
-                    {% endif %}
                 </div>
 
             </div>
@@ -161,9 +188,9 @@
 
 
         <!-- MY ACTIVE LISTINGS -->
-        {% if current_user.role == 'donor' %}
+        <!-- MY ACTIVE LISTINGS -->
         <div class="card premium-card border-0 p-4 mt-4">
-            <h5 class="fw-bold mb-4">My Active Listings</h5>
+            <h5 class="fw-bold mb-4">My Listed Resources</h5>
             {% if not resources %}
                 <p class="text-muted small">You haven't listed any resources yet.</p>
             {% else %}
@@ -188,14 +215,68 @@
                 </ul>
             {% endif %}
         </div>
+
+        <!-- NGO ANALYTICS & GALLERY -->
+        {% if current_user.is_ngo %}
+        <div class="card premium-card border-0 p-4 mt-4">
+            <h5 class="fw-bold mb-4">NGO Dashboard</h5>
+            
+            <h6 class="text-muted mb-3">Recent Potential Donors (UPI Clicks)</h6>
+            {% if not upi_clicks %}
+                <p class="text-muted small">No recent UPI interactions.</p>
+            {% else %}
+                <div class="table-responsive mb-4">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Donor</th>
+                                <th>Email</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for click in upi_clicks %}
+                            <tr>
+                                <td>{{ click.donor.email.split('@')[0] }}</td>
+                                <td>{{ click.donor.email }}</td>
+                                <td>{{ click.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+            
+            <hr class="my-4">
+            
+            <h6 class="text-muted mb-3">Homepage Image Gallery</h6>
+            <form action="{{ url_for('profile_routes.upload_ngo_gallery') }}" method="POST" enctype="multipart/form-data" class="mb-4">
+                <div class="input-group">
+                    <input type="file" name="gallery_images" class="form-control" accept="image/*" multiple required>
+                    <button class="btn btn-primary" type="submit">Upload Images</button>
+                </div>
+                <div class="form-text">You can select multiple images at once. These will be displayed as a slideshow on the homepage!</div>
+            </form>
+            
+            {% if gallery_images %}
+            <div class="row g-2">
+                {% for img in gallery_images %}
+                <div class="col-4 col-md-3">
+                    <div class="position-relative">
+                        <img src="{{ url_for('static', filename=img.image_path) }}" class="img-fluid rounded border shadow-sm object-fit-cover w-100" style="height: 100px;">
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
         {% endif %}
 
         <!-- REQUEST MANAGEMENT -->
         <div class="card premium-card border-0 p-4 mt-4">
             <h5 class="fw-bold mb-4">Request Management</h5>
 
-            {% if current_user.role == 'donor' %}
-                <h6 class="text-muted mb-3">Incoming Requests</h6>
+                <h6 class="text-muted mb-3">Requests for My Items</h6>
                 {% if not incoming_requests %}
                     <p class="text-muted small">No requests yet.</p>
                 {% else %}
@@ -204,26 +285,37 @@
                         <li class="list-group-item bg-transparent border-bottom border-light px-0 py-3">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h6 class="mb-0 fw-bold">{{ req.resource.title }}</h6>
+                                    <h6 class="mb-0 fw-bold">{{ req.resource.title if req.resource else 'Deleted Resource' }}</h6>
                                     <small class="text-muted">Requested by User ID: {{ req.receiver_id }}</small>
                                 </div>
                                 <div class="d-flex gap-2">
                                     {% if req.status == 'Pending' %}
-                                        <form method="POST" action="{{ url_for('request_routes.accept_request', req_id=req.id) }}">
-                                            <button class="btn btn-sm btn-success">Accept</button>
-                                        </form>
-                                        <form method="POST" action="{{ url_for('request_routes.reject_request', req_id=req.id) }}">
-                                            <button class="btn btn-sm btn-outline-danger">Reject</button>
-                                        </form>
+                                        {% if req.resource and req.resource.status == 'Available' %}
+                                            <form method="POST" action="{{ url_for('request_routes.accept_request', req_id=req.id) }}">
+                                                <button class="btn btn-sm btn-success">Accept</button>
+                                            </form>
+                                            <form method="POST" action="{{ url_for('request_routes.reject_request', req_id=req.id) }}">
+                                                <button class="btn btn-sm btn-outline-danger">Reject</button>
+                                            </form>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Pending (Resource Unavailable)</span>
+                                        {% endif %}
                                     {% elif req.status == 'Accepted' %}
                                         <span class="badge bg-primary align-self-center">Accepted</span>
-                                        <button class="btn btn-sm btn-outline-primary chat-btn" data-req-id="{{ req.id }}" data-title="{{ req.resource.title }}">Chat</button>
+                                        {% if req.resource %}
+                                            <button class="btn btn-sm btn-outline-primary chat-btn" data-req-id="{{ req.id }}" data-title="{{ req.resource.title }}">Chat</button>
+                                        {% endif %}
+                                        <form method="POST" action="{{ url_for('request_routes.unfulfill_request', req_id=req.id) }}">
+                                            <button class="btn btn-sm btn-outline-warning">Unfulfill</button>
+                                        </form>
                                         <form method="POST" action="{{ url_for('request_routes.fulfill_request', req_id=req.id) }}">
                                             <button class="btn btn-sm btn-info text-white">Mark Fulfilled</button>
                                         </form>
                                     {% elif req.status == 'Fulfilled' %}
                                         <span class="badge bg-info align-self-center">Fulfilled</span>
-                                        <button class="btn btn-sm btn-outline-primary chat-btn" data-req-id="{{ req.id }}" data-title="{{ req.resource.title }}">Chat</button>
+                                        {% if req.resource %}
+                                            <button class="btn btn-sm btn-outline-primary chat-btn" data-req-id="{{ req.id }}" data-title="{{ req.resource.title }}">Chat</button>
+                                        {% endif %}
                                         {% if req.history and not req.history.receiver_rating %}
                                             <form method="POST" action="{{ url_for('request_routes.rate_exchange', history_id=req.history.id) }}" class="d-flex align-items-center gap-2">
                                                 <input type="number" name="rating" min="1" max="5" class="form-control form-control-sm" style="width: 60px;" placeholder="1-5" required>
@@ -241,8 +333,8 @@
                     {% endfor %}
                     </ul>
                 {% endif %}
-            {% elif current_user.role == 'receiver' %}
-                <h6 class="text-muted mb-3">My Outgoing Requests</h6>
+                
+                <h6 class="text-muted mb-3 mt-4">My Requests for Items</h6>
                 {% if not outgoing_requests %}
                     <p class="text-muted small">You haven't requested anything yet.</p>
                 {% else %}
@@ -251,13 +343,17 @@
                         <li class="list-group-item bg-transparent border-bottom border-light px-0 py-3">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h6 class="mb-0 fw-bold">{{ req.resource.title }}</h6>
+                                    <h6 class="mb-0 fw-bold">{{ req.resource.title if req.resource else 'Deleted Resource' }}</h6>
                                     <small class="text-muted">Status: 
-                                        <span class="badge bg-{{ 'warning' if req.status == 'Pending' else 'success' if req.status in ['Accepted', 'Fulfilled'] else 'danger' }}">{{ req.status }}</span>
+                                        {% if req.status == 'Pending' and (not req.resource or req.resource.status != 'Available') %}
+                                            <span class="badge bg-secondary">Item Unavailable</span>
+                                        {% else %}
+                                            <span class="badge bg-{{ 'warning' if req.status == 'Pending' else 'success' if req.status in ['Accepted', 'Fulfilled'] else 'danger' }}">{{ req.status }}</span>
+                                        {% endif %}
                                     </small>
                                 </div>
                                 <div class="d-flex gap-2">
-                                    {% if req.status in ['Accepted', 'Fulfilled'] %}
+                                    {% if req.status in ['Accepted', 'Fulfilled'] and req.resource %}
                                         <button class="btn btn-sm btn-outline-primary chat-btn align-self-center" data-req-id="{{ req.id }}" data-title="{{ req.resource.title }}">Chat</button>
                                     {% endif %}
                                     {% if req.status == 'Fulfilled' %}
@@ -276,7 +372,6 @@
                     {% endfor %}
                     </ul>
                 {% endif %}
-            {% endif %}
         </div>
 
     </div>

@@ -146,8 +146,8 @@ def unban_user(user_id):
 @role_required('admin')
 def analytics_data():
 
-    donor_count = User.query.filter_by(role='donor').count()
-    receiver_count = User.query.filter_by(role='receiver').count()
+    user_count = User.query.filter_by(role='user').filter_by(is_ngo=False).count()
+    ngo_count = User.query.filter_by(is_ngo=True).count()
     admin_count = User.query.filter_by(role='admin').count()
 
     avail_count = Resource.query.filter_by(status='Available').count()
@@ -168,8 +168,8 @@ def analytics_data():
 
     return jsonify({
         'users': {
-            'labels': ['Donors', 'Receivers', 'Admins'],
-            'data': [donor_count, receiver_count, admin_count]
+            'labels': ['Community Users', 'NGOs', 'Admins'],
+            'data': [user_count, ngo_count, admin_count]
         },
         'resources': {
             'labels': ['Available', 'Requested', 'Fulfilled'],

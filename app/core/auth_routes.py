@@ -101,7 +101,7 @@ def register():
             flash("All fields required", "danger")
             return redirect(url_for('auth_routes.register'))
 
-        if role not in ['donor', 'receiver', 'ngo']:
+        if role not in ['user', 'ngo']:
             flash("Invalid role", "danger")
             return redirect(url_for('auth_routes.register'))
 
@@ -279,11 +279,10 @@ def login():
             session['email'] = user.email
             return redirect(url_for('auth_routes.verify_email_otp'))
 
-        # 4. ADMIN APPROVAL CHECK
-        if user.role in ['donor', 'receiver'] and user.verification_status != 'approved':
-            flash("Account pending admin approval", "warning")
+        # 4. ADMIN APPROVAL CHECK (NGOs only)
+        if user.is_ngo and user.verification_status != 'approved':
+            flash("NGO Account pending admin approval", "warning")
             return redirect(url_for('auth_routes.login'))
-
         # 5. LOGIN SUCCESS
         login_user(user, remember=remember)
 

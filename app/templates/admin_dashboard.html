@@ -111,23 +111,16 @@
 
                             <!-- CLEAN STATUS -->
                             <td>
-                                {% if u.role == 'donor' %}
-
-                                    {% if u.verification_status == 'approved' %}
-                                        <span class="badge bg-success">Verified</span>
-
-                                    {% elif u.verification_status == 'rejected' %}
-                                        <span class="badge bg-danger">Rejected</span>
-
-                                    {% elif u.is_email_verified == False %}
-                                        <span class="badge bg-secondary">Email Not Verified</span>
-
-                                    {% else %}
-                                        <span class="badge bg-warning">Pending Admin</span>
-                                    {% endif %}
-
+                                {% if u.verification_status == 'approved' %}
+                                    <span class="badge bg-success">Verified</span>
+                                {% elif u.verification_status == 'rejected' %}
+                                    <span class="badge bg-danger">Rejected</span>
+                                {% elif u.id_document %}
+                                    <span class="badge bg-warning">Pending Admin</span>
+                                {% elif u.is_email_verified == False %}
+                                    <span class="badge bg-secondary">Email Not Verified</span>
                                 {% else %}
-                                    <span class="text-muted">Not Required</span>
+                                    <span class="badge bg-light text-dark border">No ID Submitted</span>
                                 {% endif %}
                             </td>
 
