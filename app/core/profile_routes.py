@@ -29,9 +29,9 @@ def profile():
         resources = Resource.query.filter_by(donor_id=current_user.id).all()
         resource_ids = [r.id for r in resources]
         if resource_ids:
-            incoming_requests = DonationRequest.query.filter(DonationRequest.resource_id.in_(resource_ids)).all()
+            incoming_requests = DonationRequest.query.filter(DonationRequest.resource_id.in_(resource_ids)).order_by(DonationRequest.created_at.desc()).all()
             
-        outgoing_requests = DonationRequest.query.filter_by(receiver_id=current_user.id).all()
+        outgoing_requests = DonationRequest.query.filter_by(receiver_id=current_user.id).order_by(DonationRequest.created_at.desc()).all()
 
     if current_user.is_ngo:
         upi_clicks = UPIDonationClick.query.filter_by(ngo_id=current_user.id).order_by(UPIDonationClick.timestamp.desc()).limit(50).all()
@@ -201,37 +201,4 @@ def track_upi_click(ngo_id):
     
     return jsonify({'status': 'success'}), 200
 
-@profile_bp.route('/upload-document', methods=['POST'])
-@login_required
-def upload_document():
-    if 'id_document' not in request.files:
-        flash('No file part.', 'danger')
-        return redirect(url_for('profile_routes.profile'))
-        
-    file = request.files['id_document']
-    if file.filename == '':
-        flash('No selected file.', 'danger')
-        return redirect(url_for('profile_routes.profile'))
-        
-    allowed_doc_exts = ALLOWED_EXTENSIONS.union({'pdf'})
-    ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
-    
-    if file and ext in allowed_doc_exts:
-        upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'documents')
-        os.makedirs(upload_folder, exist_ok=True)
-        
-        filename = secure_filename(f"doc_{current_user.id}_{file.filename}")
-        filepath = os.path.join(upload_folder, filename)
-        
-        try:
-            file.save(filepath)
-            current_user.id_document = f"uploads/documents/{filename}"
-            db.session.commit()
-            flash('ID Document uploaded successfully. Awaiting admin review.', 'success')
-        except Exception as e:
-            flash(f'Failed to upload document: {e}', 'danger')
-            
-    else:
-        flash('Invalid file type. Allowed: PDF, JPG, PNG.', 'danger')
-        
-    return redirect(url_for('profile_routes.profile'))
+

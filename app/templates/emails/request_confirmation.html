@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Donation Request Sent</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #333333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 30px auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #198754, #20c997);
+            padding: 30px 20px;
+            text-align: center;
+            color: white;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+        }
+        .content {
+            padding: 40px 30px;
+            line-height: 1.6;
+        }
+        .content p {
+            margin-bottom: 20px;
+        }
+        .highlight {
+            font-weight: bold;
+            color: #198754;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #198754;
+            color: white;
+            text-decoration: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-weight: 600;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .footer {
+            background-color: #f1f3f5;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Request Sent! 📤</h1>
+        </div>
+        <div class="content">
+            <p>Hello <strong>{{ receiver_name }}</strong>,</p>
+            <p>We've successfully sent your request for the item: <span class="highlight">"{{ resource_title }}"</span> to the donor.</p>
+            <p>The donor has been notified via email. Once they review and accept your request, you'll be able to chat with them directly to arrange the pickup or delivery.</p>
+            <p>You can track the status of your request at any time on your profile dashboard.</p>
+            
+            <div style="text-align: center;">
+                <a href="{{ request_url }}" class="btn">View My Requests</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>Thank you for using the Donation Tracker Platform!</p>
+            <p>&copy; 2026 Donation Tracker Platform. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

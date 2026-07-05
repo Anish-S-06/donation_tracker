@@ -2,7 +2,7 @@ from flask import Blueprint, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from app import db
 from app.models import Resource, Request as DonationRequest, DonationHistory, User, PointsTransaction
-from app.services.email_service import send_request_notification
+from app.services.email_service import send_request_notification, send_request_confirmation
 
 request_bp = Blueprint('request_routes', __name__, url_prefix='/request')
 
@@ -36,10 +36,18 @@ def send_request(resource_id):
             resource_title=resource.title,
             request_url=request_url
         )
+        send_request_confirmation(
+            receiver_email=current_user.email,
+            receiver_name=current_user.email.split('@')[0],
+            resource_title=resource.title,
+            request_url=request_url
+        )
     except Exception as e:
         print(f"Background email failed: {e}")
+        flash(f"Request saved, but emails failed to send: {e}", "warning")
+        return redirect(url_for('search_routes.search_page'))
     
-    flash("Request sent successfully!", "success")
+    flash("Request sent successfully and emails delivered!", "success")
     return redirect(url_for('search_routes.search_page'))
 
 @request_bp.route('/<int:req_id>/accept', methods=['POST'])

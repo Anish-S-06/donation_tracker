@@ -1,5 +1,7 @@
 import random
 import time
+import os
+from werkzeug.utils import secure_filename
 
 from flask import (
     Blueprint, render_template, redirect, url_for,
@@ -110,6 +112,32 @@ def register():
         if existing_user:
             flash("Email already exists", "danger")
             return redirect(url_for('auth_routes.register'))
+            
+        # Handle ID Document Upload
+        if 'id_document' not in request.files:
+            flash("ID Document is required", "danger")
+            return redirect(url_for('auth_routes.register'))
+            
+        file = request.files['id_document']
+        if file.filename == '':
+            flash("No selected file for ID Document", "danger")
+            return redirect(url_for('auth_routes.register'))
+            
+        allowed_doc_exts = {'pdf', 'jpg', 'jpeg', 'png'}
+        ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+        if ext not in allowed_doc_exts:
+            flash("Invalid file type. Allowed: PDF, JPG, PNG.", "danger")
+            return redirect(url_for('auth_routes.register'))
+            
+        upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'documents')
+        os.makedirs(upload_folder, exist_ok=True)
+        
+        # We don't have a user ID yet, so use timestamp and secure filename
+        filename = secure_filename(f"temp_{int(time.time())}_{file.filename}")
+        filepath = os.path.join(upload_folder, filename)
+        file.save(filepath)
+        
+        temp_doc_path = f"uploads/documents/{filename}"
 
         # Store registration data temporarily
         session['pending_user'] = {
@@ -119,7 +147,8 @@ def register():
             'phone_number': phone_number,
             'ngo_name': request.form.get('ngo_name'),
             'ngo_description': request.form.get('ngo_description'),
-            'upi_id': request.form.get('upi_id')
+            'upi_id': request.form.get('upi_id'),
+            'id_document': temp_doc_path
         }
 
         otp = generate_otp()
@@ -185,7 +214,8 @@ def verify_email_otp():
                 is_ngo=is_ngo,
                 ngo_name=pending_user.get('ngo_name'),
                 ngo_description=pending_user.get('ngo_description'),
-                upi_id=pending_user.get('upi_id')
+                upi_id=pending_user.get('upi_id'),
+                id_document=pending_user.get('id_document')
             )
 
             new_user.set_password(pending_user['password'])

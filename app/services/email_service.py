@@ -23,6 +23,7 @@ def send_email_otp(email, otp):
         print(f"[MAIL SENT] OTP sent to {email}")
     except Exception as e:
         print(f"[MAIL ERROR] Failed to send OTP: {e}")
+        raise e
 
 def send_request_notification(donor_email, donor_name, receiver_name, resource_title, request_url):
     """Sends an email notification to the donor when their resource is requested."""
@@ -53,3 +54,33 @@ def send_request_notification(donor_email, donor_name, receiver_name, resource_t
         print(f"[MAIL SENT] Notification sent to {donor_email}")
     except Exception as e:
         print(f"[MAIL ERROR] Failed to send notification: {e}")
+        raise e
+
+def send_request_confirmation(receiver_email, receiver_name, resource_title, request_url):
+    """Sends an email confirmation to the requester when they send a request."""
+    
+    if not current_app.config.get("MAIL_USERNAME"):
+        print(f"\n========== MOCK CONFIRMATION EMAIL ==========")
+        print(f"To: {receiver_email}")
+        print(f"Subject: 📤 Request Sent: {resource_title}")
+        print(f"=============================================\n")
+        return
+
+    try:
+        msg = Message(
+            subject=f"📤 Request Sent: {resource_title}",
+            sender=current_app.config["MAIL_USERNAME"],
+            recipients=[receiver_email]
+        )
+        
+        from flask import render_template
+        msg.html = render_template('emails/request_confirmation.html', 
+                                   receiver_name=receiver_name, 
+                                   resource_title=resource_title,
+                                   request_url=request_url)
+        
+        mail.send(msg)
+        print(f"[MAIL SENT] Confirmation sent to {receiver_email}")
+    except Exception as e:
+        print(f"[MAIL ERROR] Failed to send confirmation: {e}")
+        raise e
