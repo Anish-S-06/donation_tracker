@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Donation Tracker - Home{% endblock %}
+{% block title %}Seva Sankalp - Home{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -40,14 +40,19 @@
 <!-- Hero Section for Non-Logged In Users -->
 {% if not current_user.is_authenticated %}
 <!-- Guest Landing Page: Direct NGO Donations -->
-<div class="row mb-5 mt-4 text-center" data-aos="fade-up">
+<div class="row mb-5 mt-4" data-aos="fade-up">
     <div class="col-12">
-        <h1 class="display-4 fw-bold mb-3" style="line-height: 1.2;">
-            Support Verified NGOs Directly
-        </h1>
-        <p class="lead text-muted mx-auto" style="max-width: 700px;">
-            You can donate funds directly to these verified NGOs via UPI without creating an account. 100% of your donation goes directly to them.
-        </p>
+        <div class="hero-animated-bg p-5 text-center shadow-lg">
+            <div class="hero-content py-4">
+                <h1 class="text-huge mb-3">Empower Your Community</h1>
+                <p class="lead mx-auto mb-4" style="max-width: 700px; font-weight: 500; font-size: 1.25rem;">
+                    Support verified NGOs directly via UPI or donate essential resources to those in need. 100% transparent.
+                </p>
+                <div class="d-flex justify-content-center gap-3 mt-4">
+                    <a href="{{ url_for('auth_routes.register') }}" class="btn btn-light text-primary btn-lg rounded-pill fw-bold shadow px-5">Join the Movement</a>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -139,110 +144,9 @@
 <!-- Logged In Dashboard View -->
 
 <div class="row" data-aos="fade-up">
-    <!-- Left Column: Create Resource (Conditional) -->
-    <div class="col-md-4 mb-4">
-        {% if not current_user.is_ngo %}
-            <div class="card premium-card border-0 p-3 shadow-sm">
-                <div class="card-body">
-                    <h5 class="fw-bold mb-1 text-gradient">Create Resource</h5>
-                    <p class="text-muted fs-7 mb-3">Share a new item with the community</p>
-                    
-                    <form id="resourceForm">
-                        <input type="hidden" id="donor_id" value="{{ current_user.id }}">
-                        
-                        <div class="mb-3">
-                            <label class="form-label fw-medium fs-7">Title</label>
-                            <input type="text" class="form-control rounded-3 bg-light border-0 px-3 py-2" id="title" placeholder="e.g. Warm Winter Coat" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label fw-medium fs-7">Description</label>
-                            <textarea class="form-control rounded-3 bg-light border-0 px-3 py-2" id="description" rows="3" placeholder="Describe the condition and pick-up details..." required></textarea>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label fw-medium fs-7">Category</label>
-                            <select class="form-select rounded-3 bg-light border-0 px-3 py-2" id="category">
-                                <option value="Clothing">Clothing</option>
-                                <option value="Food">Food</option>
-                                <option value="Electronics">Electronics</option>
-                                <option value="Books">Books</option>
-                                <option value="Household">Household</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label fw-medium fs-7">Condition</label>
-                            <select class="form-select rounded-3 bg-light border-0 px-3 py-2" id="condition">
-                                <option>New</option>
-                                <option>Like New</option>
-                                <option>Good</option>
-                                <option>Fair</option>
-                            </select>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label fw-medium fs-7">Photo (Optional)</label>
-                            <input class="form-control rounded-3 bg-light border-0 py-2" type="file" id="resourceImage" accept="image/*">
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label fw-medium fs-7">Pickup Address (Optional)</label>
-                            <div class="input-group mb-2">
-                                <input type="text" class="form-control bg-light border-0 px-3 py-2" id="address" placeholder="e.g. 123 Main St, City">
-                                <button class="btn btn-outline-secondary bg-light border-0" type="button" id="getLocationBtn" title="Use My Current Location">
-                                    📍 GPS
-                                </button>
-                                <button class="btn btn-outline-secondary bg-light border-0" type="button" id="showMapBtn" title="Pick from Map">
-                                    🗺️ Map
-                                </button>
-                            </div>
-                            <div id="mapContainer" style="display: none;" class="mb-2">
-                                <div id="pickupMap" style="height: 250px; width: 100%; border-radius: 12px; z-index: 1;"></div>
-                                <div class="form-text fs-7 mt-1 text-muted">Click anywhere on the map to automatically set the address.</div>
-                            </div>
-                            <input type="hidden" id="location_lat">
-                            <input type="hidden" id="location_lng">
-                            <div class="form-text fs-7" id="locationStatus"></div>
-                        </div>
-                        
-                        
-                        <button type="submit" class="btn btn-gradient-primary w-100 py-2 rounded-3 fw-semibold shadow-sm">Add Listing</button>
-                    </form>
-                </div>
-            </div>
-            
-        {% if not current_user.is_ngo %}
-            <!-- Find Donations Card for Users -->
-            <div class="card premium-card border-0 p-4 mt-4 text-center shadow-sm">
-               <div class="card-body">
-                  <h5 class="fw-bold mb-3">Find Donations</h5>
-                  <p class="text-muted mb-4">
-                     Ready to find what you need? Open the interactive map to search for items near you!
-                  </p>
-                  <a href="{{ url_for('search_routes.search_page') }}" class="btn btn-gradient-secondary w-100 py-2 rounded-pill fw-bold shadow-sm">Open Search Map</a>
-             </div>
-          </div>
-        {% endif %}
-        {% elif current_user.role == 'admin' %}
-             <div class="card premium-card border-0 p-4 text-center shadow-sm">
-               <div class="card-body">
-                  <h5 class="fw-bold mb-3">Administrator Access</h5>
-                  <p class="text-muted mb-4">
-                    Manage the entire platform from your control center.
-                  </p>
-                  <a href="{{ url_for('admin_routes.dashboard') }}"
-                     class="btn btn-outline-danger w-100 rounded-pill py-2 fw-bold">
-                     Open Admin Dashboard
-                  </a>
-              </div>
-           </div>
-        {% endif %}
-    </div>
 
-    <!-- Right Column: Available Resources -->
-    <div class="col-md-8" data-aos="fade-left" data-aos-delay="200">
+    <!-- Full Width Column: Available Resources -->
+    <div class="col-md-12" data-aos="fade-up" data-aos-delay="200">
         <div class="card premium-card border-0 p-3 shadow-sm">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -250,83 +154,80 @@
                     <a href="{{ url_for('search_routes.search_page') }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">View Map</a>
                 </div>
                 
-                <div class="mb-3">
+                {% if current_user.role == 'user' %}
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 p-3 bg-gradient-light rounded-4 border border-light shadow-sm" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                    <div>
+                        <h6 class="fw-bold mb-1 text-dark">Want to create a resource?</h6>
+                        <p class="text-muted small mb-0 mb-sm-0 mb-2">Share an item with the community and make an impact.</p>
+                    </div>
+                    <a href="{{ url_for('resource_routes.my_resources') }}" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm text-nowrap">Just click this</a>
+                </div>
+                {% endif %}
+                
+                <div class="mb-4">
                     <input type="text" id="dashboardSearch" class="form-control rounded-pill bg-light border-0 px-4 py-2" placeholder="Search by title, category, or description...">
                 </div>
                 
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Listing</th>
-                                <th>Category</th>
-                                <th>Condition</th>
-                                <th>Status</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="resourceTable">
-                            {% for r in resources %}
-                            <tr class="resource-row"
-                                data-title="{{ r.title }}"
-                                data-desc="{{ r.description }}"
-                                data-cat="{{ r.category }}"
-                                data-cond="{{ r.condition }}"
-                                data-addr="{{ r.address if r.address else 'No address provided' }}"
-                                data-lat="{{ r.location_lat }}"
-                                data-lng="{{ r.location_lng }}"
-                                data-img="{{ r.image if r.image else '' }}">
-                                <td onclick="openResourceModal(this)" style="cursor: pointer;">
-                                    <div class="d-flex align-items-center">
-                                        {% if r.image %}
-                                        <img src="{{ url_for('static', filename=r.image) }}" alt="Item" class="rounded-3 me-3 object-fit-cover border" style="width: 50px; height: 50px;">
-                                        {% else %}
-                                        <div class="bg-light border rounded-3 d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
-                                            <i class="fs-4 text-muted">📦</i>
-                                        </div>
-                                        {% endif %}
-                                        <div>
-                                            <div class="fw-bold text-dark">
-                                                {{ r.title }}
-                                            </div>
-                                            <div class="text-muted fs-7 text-truncate" style="max-width: 200px;">{{ r.description }}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td onclick="openResourceModal(this)" style="cursor: pointer;"><span class="badge bg-light text-dark border">{{ r.category }}</span></td>
-                                <td onclick="openResourceModal(this)" style="cursor: pointer;"><span class="text-muted fs-7">{{ r.condition }}</span></td>
-                                <td onclick="openResourceModal(this)" style="cursor: pointer;">
+                <div id="resourceGrid" class="masonry-grid mt-4">
+                    {% for r in resources %}
+                    <div class="masonry-item resource-data-node"
+                        data-title="{{ r.title }}"
+                        data-desc="{{ r.description }}"
+                        data-cat="{{ r.category }}"
+                        data-cond="{{ r.condition }}"
+                        data-addr="{{ r.address if r.address else 'No address provided' }}"
+                        data-lat="{{ r.location_lat }}"
+                        data-lng="{{ r.location_lng }}"
+                        data-img="{{ r.image if r.image else '' }}">
+                        <div class="resource-card position-relative shadow-sm border-0">
+                            <span class="badge category-badge-floating rounded-pill px-3 py-2">{{ r.category }}</span>
+                            
+                            <div class="img-wrapper" onclick="openResourceModal(this)" style="cursor: pointer;">
+                                {% if r.image %}
+                                <img src="{{ url_for('static', filename=r.image) }}" class="w-100 object-fit-cover" style="height: 200px;" alt="Item">
+                                {% else %}
+                                <div class="w-100 bg-light d-flex justify-content-center align-items-center" style="height: 200px;">
+                                    <i class="fs-1 text-muted opacity-50 bi bi-box-seam"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="p-3">
+                                <h5 class="fw-bold mb-1" onclick="openResourceModal(this)" style="cursor: pointer;">{{ r.title }}</h5>
+                                <p class="text-muted small mb-2">{{ r.condition }}</p>
+                                
+                                <div class="mb-3 mt-2">
                                     {% if r.status == 'Available' %}
-                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">{{ r.status }}</span>
+                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 py-2 px-3 w-100 text-center">{{ r.status }}</span>
                                     {% elif r.status == 'Requested' %}
-                                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25">{{ r.status }}</span>
+                                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 py-2 px-3 w-100 text-center">{{ r.status }}</span>
                                     {% else %}
-                                        <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25">{{ r.status }}</span>
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 py-2 px-3 w-100 text-center">{{ r.status }}</span>
                                     {% endif %}
-                                </td>
-                                <td>
+                                </div>
+                                
+                                <div class="d-flex gap-2 mt-3 pt-3 border-top border-subtle">
+                                    <a href="{{ url_for('profile_routes.public_profile', user_id=r.donor_id) }}" class="btn btn-sm btn-outline-primary flex-grow-1 rounded-pill fw-medium px-0">
+                                        <i class="bi bi-person-circle"></i> Profile
+                                    </a>
                                     {% if not current_user.is_ngo and current_user.role != 'admin' and r.status == 'Available' and r.donor_id != current_user.id %}
-                                    <form method="POST" action="{{ url_for('request_routes.send_request', resource_id=r.id) }}" class="d-inline">
-                                        <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3">Request</button>
+                                    <form method="POST" action="{{ url_for('request_routes.send_request', resource_id=r.id) }}" class="m-0 flex-grow-1">
+                                        <button type="submit" class="btn btn-sm btn-gradient-primary w-100 rounded-pill fw-bold shadow-sm px-0">Request</button>
                                     </form>
                                     {% elif r.donor_id == current_user.id %}
-                                    <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 disabled">Yours</button>
-                                    {% else %}
-                                        <span class="text-muted fs-7">-</span>
+                                    <button class="btn btn-sm btn-outline-secondary flex-grow-1 rounded-pill disabled px-0">Yours</button>
                                     {% endif %}
-                                </td>
-                            </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="5" class="text-center text-muted py-5">
-                                    <div class="mb-3" style="font-size: 2rem;">📭</div>
-                                    <h6 class="fw-bold text-dark">No resources found</h6>
-                                    <p class="fs-7 mb-0">Be the first to list an item on the platform!</p>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="w-100 text-center text-muted py-5 mt-4" style="grid-column: 1 / -1;">
+                        <div class="mb-3" style="font-size: 3rem;">📭</div>
+                        <h4 class="fw-bold text-dark mb-2">No resources found</h4>
+                        <p class="fs-6 mb-0">Be the first to list an item on the platform!</p>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
@@ -387,200 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 {% if current_user.is_authenticated and not current_user.is_ngo %}
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const form = document.getElementById('resourceForm');
-if (form) {
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        // Show loading state on button
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const originalBtnText = submitBtn.innerText;
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
-        submitBtn.disabled = true;
-        
-        let finalLat = document.getElementById('location_lat') && document.getElementById('location_lat').value ? parseFloat(document.getElementById('location_lat').value) : null;
-        let finalLng = document.getElementById('location_lng') && document.getElementById('location_lng').value ? parseFloat(document.getElementById('location_lng').value) : null;
-        const typedAddress = document.getElementById('address') ? document.getElementById('address').value.trim() : '';
-
-        // Forward Geocoding: If they typed an address but didn't use GPS/Map, we fetch coordinates for them!
-        if (typedAddress && (!finalLat || !finalLng)) {
-            try {
-                const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(typedAddress)}`);
-                const geoData = await geoRes.json();
-                if (geoData && geoData.length > 0) {
-                    finalLat = parseFloat(geoData[0].lat);
-                    finalLng = parseFloat(geoData[0].lon);
-                }
-            } catch (err) {
-                console.error("Geocoding failed, continuing without precise map coordinates", err);
-            }
-        }
-
-        const formData = new FormData();
-        formData.append('donor_id', document.getElementById('donor_id').value);
-        formData.append('title', document.getElementById('title').value);
-        formData.append('description', document.getElementById('description').value);
-        formData.append('category', document.getElementById('category').value);
-        formData.append('condition', document.getElementById('condition').value);
-        formData.append('address', typedAddress);
-        if (finalLat) formData.append('location_lat', finalLat);
-        if (finalLng) formData.append('location_lng', finalLng);
-        
-        const imageFile = document.getElementById('resourceImage').files[0];
-        if (imageFile) {
-            formData.append('image', imageFile);
-        }
-        
-        try {
-            const res = await fetch('/resources/', {
-                method: 'POST',
-                body: formData
-            });
-            
-            if (res.ok) {
-                if(typeof Toastify !== 'undefined') {
-                    Toastify({
-                        text: "Resource successfully listed!",
-                        duration: 3000,
-                        gravity: "top",
-                        position: "right",
-                        style: { background: "linear-gradient(to right, #00b09b, #96c93d)", borderRadius: "10px" }
-                    }).showToast();
-                    setTimeout(() => window.location.reload(), 1000);
-                } else {
-                    window.location.reload();
-                }
-            } else {
-                const errorData = await res.json();
-                if(typeof Toastify !== 'undefined') {
-                    Toastify({
-                        text: "Failed: " + (errorData.error || 'Unknown error'),
-                        duration: 3000,
-                        gravity: "top",
-                        position: "right",
-                        style: { background: "linear-gradient(to right, #ff5f6d, #ffc371)", borderRadius: "10px" }
-                    }).showToast();
-                } else {
-                    alert('Failed to create resource: ' + (errorData.error || 'Unknown error'));
-                }
-                submitBtn.innerHTML = originalBtnText;
-                submitBtn.disabled = false;
-            }
-        } catch (error) {
-            console.error("Error creating resource", error);
-            submitBtn.innerHTML = originalBtnText;
-            submitBtn.disabled = false;
-        }
-    });
-}
-
-const locBtn = document.getElementById('getLocationBtn');
-if (locBtn) {
-    locBtn.addEventListener('click', () => {
-        const status = document.getElementById('locationStatus');
-        if (!navigator.geolocation) {
-            status.textContent = "Geolocation is not supported by your browser";
-            status.className = "form-text text-danger fs-7";
-            return;
-        }
-        
-        status.textContent = "Locating...";
-        status.className = "form-text text-muted fs-7";
-        
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
-                document.getElementById('location_lat').value = lat;
-                document.getElementById('location_lng').value = lng;
-                
-                // Try reverse geocoding to fill address
-                try {
-                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
-                    const data = await res.json();
-                    if (data && data.display_name) {
-                        document.getElementById('address').value = data.display_name;
-                    }
-                } catch (e) {}
-
-                status.textContent = "✓ GPS Location captured securely!";
-                status.className = "form-text text-success fs-7 fw-bold";
-                
-                if(pickupMarker && pickupMap) {
-                    pickupMarker.setLatLng([lat, lng]);
-                    pickupMap.setView([lat, lng], 15);
-                }
-            },
-            (error) => {
-                status.textContent = "Failed to get location. Your browser/device might be blocking GPS access on non-HTTPS connections.";
-                status.className = "form-text text-danger fs-7";
-            }
-        );
-    });
-}
-
-// Leaflet Map Logic
-const showMapBtn = document.getElementById('showMapBtn');
-const mapContainer = document.getElementById('mapContainer');
-let pickupMap = null;
-let pickupMarker = null;
-
-if (showMapBtn) {
-    showMapBtn.addEventListener('click', () => {
-        if (mapContainer.style.display === 'none') {
-            mapContainer.style.display = 'block';
-            
-            // Initialize map if not already done
-            if (!pickupMap) {
-                // Default to a central point (e.g., India or roughly anywhere)
-                pickupMap = L.map('pickupMap').setView([20.5937, 78.9629], 5);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 19,
-                    attribution: '© OpenStreetMap'
-                }).addTo(pickupMap);
-                
-                pickupMarker = L.marker([20.5937, 78.9629]).addTo(pickupMap);
-
-                // Map Click Event for Reverse Geocoding
-                pickupMap.on('click', async function(e) {
-                    const lat = e.latlng.lat;
-                    const lng = e.latlng.lng;
-                    
-                    pickupMarker.setLatLng(e.latlng);
-                    document.getElementById('location_lat').value = lat;
-                    document.getElementById('location_lng').value = lng;
-                    
-                    const status = document.getElementById('locationStatus');
-                    status.textContent = "Fetching address...";
-                    status.className = "form-text text-muted fs-7";
-
-                    try {
-                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
-                        const data = await res.json();
-                        if (data && data.display_name) {
-                            document.getElementById('address').value = data.display_name;
-                            status.textContent = "✓ Map Location captured!";
-                            status.className = "form-text text-success fs-7 fw-bold";
-                        }
-                    } catch (err) {
-                        status.textContent = "✓ Map coordinates captured, but failed to fetch address name.";
-                        status.className = "form-text text-warning fs-7 fw-bold";
-                    }
-                });
-            }
-            
-            // Fix Leaflet tile loading issue when div is initially hidden
-            setTimeout(() => {
-                pickupMap.invalidateSize();
-            }, 100);
-        } else {
-            mapContainer.style.display = 'none';
-        }
-    });
-}
-
 async function trackUPIClick(ngoId) {
     try {
         await fetch(`/profile/api/track-upi-click/${ngoId}`, { method: 'POST' });
@@ -597,7 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (searchInput) {
         searchInput.addEventListener('keyup', function() {
             const filter = this.value.toLowerCase();
-            const rows = document.querySelectorAll('#resourceTable tr:not(.empty-state)');
+            const rows = document.querySelectorAll('.masonry-item');
             let hasVisible = false;
             
             rows.forEach(row => {
@@ -613,13 +321,15 @@ document.addEventListener('DOMContentLoaded', () => {
             let emptyMsg = document.getElementById('noResultsRow');
             if (!hasVisible && filter.trim() !== '') {
                 if (!emptyMsg) {
-                    const tbody = document.getElementById('resourceTable');
-                    emptyMsg = document.createElement('tr');
+                    const grid = document.getElementById('resourceGrid');
+                    emptyMsg = document.createElement('div');
                     emptyMsg.id = 'noResultsRow';
-                    emptyMsg.innerHTML = '<td colspan="5" class="text-center text-muted py-4">No matching resources found.</td>';
-                    tbody.appendChild(emptyMsg);
+                    emptyMsg.style.gridColumn = '1 / -1';
+                    emptyMsg.className = 'w-100 text-center text-muted py-5 mt-4';
+                    emptyMsg.innerHTML = '<h5 class="fw-bold text-dark">No matching resources found.</h5>';
+                    grid.appendChild(emptyMsg);
                 }
-                emptyMsg.style.display = '';
+                emptyMsg.style.display = 'block';
             } else if (emptyMsg) {
                 emptyMsg.style.display = 'none';
             }
@@ -627,8 +337,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-function openResourceModal(tdElement) {
-    const row = tdElement.closest('tr');
+function openResourceModal(element) {
+    const row = element.closest('.resource-data-node') || element.closest('tr');
     document.getElementById('modalTitle').textContent = row.getAttribute('data-title');
     document.getElementById('modalDesc').textContent = row.getAttribute('data-desc');
     document.getElementById('modalCat').textContent = row.getAttribute('data-cat');

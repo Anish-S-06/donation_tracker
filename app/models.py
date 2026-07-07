@@ -91,6 +91,9 @@ class DonationHistory(db.Model):
     request_id = db.Column(db.Integer, db.ForeignKey('requests.id'), nullable=False)
     donor_rating = db.Column(db.Integer, nullable=True)  # 1 to 5
     receiver_rating = db.Column(db.Integer, nullable=True)
+    receipt_photo = db.Column(db.String(255), nullable=True)
+    usage_photo = db.Column(db.String(255), nullable=True)
+    impact_message = db.Column(db.Text, nullable=True)
     completed_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class PointsTransaction(db.Model):
@@ -134,3 +137,16 @@ class NGOGalleryImage(db.Model):
     uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     ngo = db.relationship('User', backref=db.backref('gallery_images', lazy=True))
+
+class UserRating(db.Model):
+    __tablename__ = 'user_ratings'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    rater_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    rated_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    rating = db.Column(db.Integer, nullable=False)  # 1 to 5
+    review = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    rater = db.relationship('User', foreign_keys=[rater_id], backref='given_ratings')
+    rated_user = db.relationship('User', foreign_keys=[rated_user_id], backref='received_ratings')

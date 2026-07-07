@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% block title %}{{ user.email.split('@')[0] }}'s Profile - Seva Sankalp{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center" data-aos="fade-up">
+    <div class="col-md-8">
+        <div class="card premium-card border-0 shadow-sm mb-4">
+            <div class="card-body text-center p-5">
+                {% if user.profile_photo %}
+                    <img src="{{ url_for('static', filename=user.profile_photo) }}" alt="Profile Photo" class="rounded-circle mb-3 shadow-sm border" style="width: 150px; height: 150px; object-fit: cover;">
+                {% elif user.ngo_image %}
+                    <img src="{{ url_for('static', filename=user.ngo_image) }}" alt="NGO Photo" class="rounded-circle mb-3 shadow-sm border" style="width: 150px; height: 150px; object-fit: cover;">
+                {% else %}
+                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center mb-3 mx-auto shadow-sm" style="width: 150px; height: 150px;">
+                        <i class="fs-1 bi bi-person"></i>
+                    </div>
+                {% endif %}
+                
+                <h3 class="fw-bold mb-1">{{ user.ngo_name if user.is_ngo and user.ngo_name else user.email.split('@')[0] }}</h3>
+                <span class="badge bg-{{ 'primary' if user.is_ngo else 'secondary' }} mb-3">
+                    {{ 'Verified NGO' if user.is_ngo else 'Community Member' }}
+                </span>
+                
+                <div class="d-flex justify-content-center gap-4 mb-4">
+                    <div class="text-center">
+                        <h4 class="fw-bold text-gradient mb-0">{{ user.trust_score }}</h4>
+                        <span class="text-muted small text-uppercase">Trust Score</span>
+                    </div>
+                    {% if user.badge_level != 'None' %}
+                    <div class="text-center">
+                        <h4 class="fw-bold mb-0">
+                            {% if user.badge_level == 'Platinum' %}💎
+                            {% elif user.badge_level == 'Gold' %}🥇
+                            {% elif user.badge_level == 'Silver' %}🥈
+                            {% elif user.badge_level == 'Bronze' %}🥉
+                            {% endif %}
+                        </h4>
+                        <span class="text-muted small text-uppercase">{{ user.badge_level }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="text-center">
+                        <h4 class="fw-bold mb-0 text-warning">★ {{ "%.1f"|format(avg_rating) if avg_rating > 0 else "New" }}</h4>
+                        <span class="text-muted small text-uppercase">User Rating</span>
+                    </div>
+                </div>
+                
+                {% if user.ngo_description %}
+                <p class="text-muted fst-italic mx-auto" style="max-width: 600px;">"{{ user.ngo_description }}"</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Rating Section -->
+        <div class="card premium-card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-3">Community Reviews</h5>
+                
+                {% if current_user.is_authenticated and current_user.id != user.id %}
+                <div class="mb-4 p-3 bg-light rounded">
+                    <h6 class="fw-bold">{{ 'Update your rating' if my_rating else 'Rate this user' }}</h6>
+                    <form action="{{ url_for('profile_routes.rate_user', user_id=user.id) }}" method="POST">
+                        <div class="mb-2">
+                            <select name="rating" class="form-select form-select-sm w-auto d-inline-block" required>
+                                <option value="" disabled {{ 'selected' if not my_rating else '' }}>Select Rating</option>
+                                <option value="5" {{ 'selected' if my_rating and my_rating.rating == 5 else '' }}>★★★★★ (5/5)</option>
+                                <option value="4" {{ 'selected' if my_rating and my_rating.rating == 4 else '' }}>★★★★☆ (4/5)</option>
+                                <option value="3" {{ 'selected' if my_rating and my_rating.rating == 3 else '' }}>★★★☆☆ (3/5)</option>
+                                <option value="2" {{ 'selected' if my_rating and my_rating.rating == 2 else '' }}>★★☆☆☆ (2/5)</option>
+                                <option value="1" {{ 'selected' if my_rating and my_rating.rating == 1 else '' }}>★☆☆☆☆ (1/5)</option>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <textarea name="review" class="form-control form-control-sm" rows="2" placeholder="Write a short review (optional)">{{ my_rating.review if my_rating and my_rating.review else '' }}</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4">Submit Rating</button>
+                    </form>
+                    {% if my_rating %}
+                    <form action="{{ url_for('profile_routes.delete_rating', user_id=user.id) }}" method="POST" class="d-inline mt-2">
+                        <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 mt-2">Delete My Rating</button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if ratings %}
+                    <div class="list-group list-group-flush">
+                    {% for r in ratings %}
+                        <div class="list-group-item px-0 border-light">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <strong>{{ r.rater.email.split('@')[0] }}</strong>
+                                <span class="text-warning">
+                                    {% for _ in range(r.rating) %}★{% endfor %}{% for _ in range(5 - r.rating) %}☆{% endfor %}
+                                </span>
+                            </div>
+                            {% if r.review %}
+                                <p class="mb-0 text-muted small">{{ r.review }}</p>
+                            {% endif %}
+                            <small class="text-muted" style="font-size: 0.75rem;">{{ r.created_at.strftime('%b %d, %Y') }}</small>
+                        </div>
+                    {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted mb-0">No reviews yet.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <h4 class="fw-bold mb-3 text-gradient">Available Resources from this Donor</h4>
+        {% if resources %}
+        <div class="row g-4">
+            {% for r in resources %}
+            <div class="col-md-6">
+                <div class="card premium-card h-100 border-0 shadow-sm">
+                    {% if r.image %}
+                    <img src="{{ url_for('static', filename=r.image) }}" class="card-img-top object-fit-cover" alt="Resource Image" style="height: 180px;">
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="fw-bold mb-1">{{ r.title }}</h5>
+                        <p class="text-muted small mb-2">{{ r.category }} • {{ r.condition }}</p>
+                        <p class="fs-7 text-muted">{{ r.description[:100] }}...</p>
+                        <form method="POST" action="{{ url_for('request_routes.send_request', resource_id=r.id) }}">
+                            <button type="submit" class="btn btn-sm btn-outline-success w-100">Request Item</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-light text-center border shadow-sm">
+            This user currently has no available resources listed.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

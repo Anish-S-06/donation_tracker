@@ -67,7 +67,7 @@ def send_verification_email(user):
     if mail_username:
         try:
             msg = Message(
-                subject="Verify your Email - Donation Tracker",
+                subject="Verify your Email - Seva Sankalp",
                 recipients=[user.email],
                 body=f"Click below to verify your email:\n\n{verify_url}"
             )

@@ -1,7 +1,7 @@
-from flask import jsonify, request, current_app
-from flask_login import current_user
+from flask import jsonify, request, current_app, render_template
+from flask_login import current_user, login_required
 from . import resource_bp
-from app.models import Resource, User
+from app.models import Resource, User, Request as DonationRequest
 from app import db
 import os
 from werkzeug.utils import secure_filename
@@ -83,7 +83,8 @@ def create_resource():
                     
                 image_path = f"uploads/resources/{filename}"
             except Exception as e:
-                return jsonify({'error': f'Failed to process image: {str(e)}'}), 500
+                db.session.rollback()
+                return jsonify({'error': str(e)}), 500
 
     new_resource = Resource(
         donor_id=donor.id,
@@ -167,3 +168,20 @@ def delete_resource(resource_id):
     db.session.delete(resource)
     db.session.commit()
     return jsonify({'message': f'Resource {resource_id} deleted successfully'}), 200
+
+@resource_bp.route('/my_resources', methods=['GET'])
+@login_required
+def my_resources():
+    incoming_requests = []
+    outgoing_requests = []
+    resources = []
+    
+    if current_user.role == 'user':
+        resources = Resource.query.filter_by(donor_id=current_user.id).all()
+        resource_ids = [r.id for r in resources]
+        if resource_ids:
+            incoming_requests = DonationRequest.query.filter(DonationRequest.resource_id.in_(resource_ids)).order_by(DonationRequest.created_at.desc()).all()
+            
+        outgoing_requests = DonationRequest.query.filter_by(receiver_id=current_user.id).order_by(DonationRequest.created_at.desc()).all()
+
+    return render_template('my_resources.html', resources=resources, incoming_requests=incoming_requests, outgoing_requests=outgoing_requests)

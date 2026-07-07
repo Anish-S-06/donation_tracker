@@ -3,9 +3,8 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from PIL import Image
-from PIL import Image
 from app import db
-from app.models import User, Request as DonationRequest, Resource, UPIDonationClick, NGOGalleryImage
+from app.models import User, Request as DonationRequest, Resource, UPIDonationClick, NGOGalleryImage, UserRating
 
 profile_bp = Blueprint('profile_routes', __name__, url_prefix='/profile')
 
@@ -14,7 +13,6 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@profile_bp.route('/')
 @profile_bp.route('/')
 @login_required
 def profile():
@@ -201,4 +199,59 @@ def track_upi_click(ngo_id):
     
     return jsonify({'status': 'success'}), 200
 
+@profile_bp.route('/public/<int:user_id>', methods=['GET'])
+def public_profile(user_id):
+    user = db.session.get(User, user_id)
+    if not user:
+        flash('User not found.', 'danger')
+        return redirect(url_for('frontend_routes.index'))
+        
+    resources = Resource.query.filter_by(donor_id=user.id, status='Available').all()
+    
+    # Calculate average rating
+    ratings = user.received_ratings
+    avg_rating = sum([r.rating for r in ratings]) / len(ratings) if ratings else 0
+    
+    # Get current user's rating for this user
+    my_rating = None
+    if current_user.is_authenticated:
+        my_rating = UserRating.query.filter_by(rater_id=current_user.id, rated_user_id=user.id).first()
+    
+    return render_template('public_profile.html', user=user, resources=resources, avg_rating=avg_rating, ratings=ratings, my_rating=my_rating)
 
+@profile_bp.route('/public/<int:user_id>/rate', methods=['POST'])
+@login_required
+def rate_user(user_id):
+    if user_id == current_user.id:
+        flash("You cannot rate yourself.", "danger")
+        return redirect(url_for('profile_routes.public_profile', user_id=user_id))
+        
+    rating_val = int(request.form.get('rating', 0))
+    review_text = request.form.get('review', '')
+    
+    if rating_val < 1 or rating_val > 5:
+        flash("Invalid rating.", "danger")
+        return redirect(url_for('profile_routes.public_profile', user_id=user_id))
+        
+    existing = UserRating.query.filter_by(rater_id=current_user.id, rated_user_id=user_id).first()
+    if existing:
+        existing.rating = rating_val
+        existing.review = review_text
+        flash("Your rating has been updated.", "success")
+    else:
+        new_rating = UserRating(rater_id=current_user.id, rated_user_id=user_id, rating=rating_val, review=review_text)
+        db.session.add(new_rating)
+        flash("Thank you for rating this user.", "success")
+        
+    db.session.commit()
+    return redirect(url_for('profile_routes.public_profile', user_id=user_id))
+
+@profile_bp.route('/public/<int:user_id>/rate/delete', methods=['POST'])
+@login_required
+def delete_rating(user_id):
+    existing = UserRating.query.filter_by(rater_id=current_user.id, rated_user_id=user_id).first()
+    if existing:
+        db.session.delete(existing)
+        db.session.commit()
+        flash("Your rating has been removed.", "info")
+    return redirect(url_for('profile_routes.public_profile', user_id=user_id))

@@ -1,37 +1,37 @@
 /* Donation Tracker - Premium Global Styles */
 
 :root {
-    /* Light Theme (Default - Warm & Compassionate) */
-    --bg-color: #FFF8F3;
-    --text-color: #264653;
-    --card-bg: rgba(255, 255, 255, 0.85);
-    --card-border: rgba(231, 111, 81, 0.1);
-    --nav-bg: rgba(255, 255, 255, 0.8);
-    --nav-link: #3d6a7e;
-    --input-bg: rgba(255, 255, 255, 0.9);
-    --input-border: #e9ecef;
+    /* Light Theme (High Contrast & Premium) */
+    --bg-color: #FAFAFA;
+    --text-color: #111827;
+    --card-bg: rgba(255, 255, 255, 0.95);
+    --card-border: rgba(0, 0, 0, 0.08);
+    --nav-bg: rgba(255, 255, 255, 0.9);
+    --nav-link: #1f2937;
+    --input-bg: rgba(255, 255, 255, 1);
+    --input-border: #d1d5db;
     --table-row-bg: #ffffff;
-    --muted-text: #6c757d;
-    --border-subtle: rgba(231, 111, 81, 0.08);
-    --shadow-color: rgba(231, 111, 81, 0.04);
-    --shadow-hover: rgba(231, 111, 81, 0.08);
+    --muted-text: #4b5563;
+    --border-subtle: rgba(0, 0, 0, 0.1);
+    --shadow-color: rgba(0, 0, 0, 0.08);
+    --shadow-hover: rgba(0, 0, 0, 0.15);
 }
 
 [data-bs-theme="dark"] {
-    /* Dark Theme overrides for Glassmorphism */
-    --bg-color: #0f1115;
-    --text-color: #f1f5f9;
-    --card-bg: rgba(25, 30, 35, 0.75);
-    --card-border: rgba(255, 255, 255, 0.08);
-    --nav-bg: rgba(15, 17, 21, 0.85);
-    --nav-link: #cbd5e1;
-    --input-bg: rgba(20, 24, 28, 0.7);
-    --input-border: rgba(255, 255, 255, 0.15);
-    --table-row-bg: rgba(35, 40, 45, 0.6);
-    --muted-text: #94a3b8;
-    --border-subtle: rgba(255, 255, 255, 0.05);
-    --shadow-color: rgba(0, 0, 0, 0.2);
-    --shadow-hover: rgba(0, 0, 0, 0.4);
+    /* Dark Theme (High Contrast & Deep) */
+    --bg-color: #09090b;
+    --text-color: #f8fafc;
+    --card-bg: rgba(24, 24, 27, 0.85);
+    --card-border: rgba(255, 255, 255, 0.15);
+    --nav-bg: rgba(9, 9, 11, 0.9);
+    --nav-link: #f1f5f9;
+    --input-bg: rgba(39, 39, 42, 0.8);
+    --input-border: rgba(255, 255, 255, 0.2);
+    --table-row-bg: rgba(39, 39, 42, 0.7);
+    --muted-text: #cbd5e1;
+    --border-subtle: rgba(255, 255, 255, 0.1);
+    --shadow-color: rgba(0, 0, 0, 0.5);
+    --shadow-hover: rgba(0, 0, 0, 0.7);
 }
 
 /* Base & Typography */
@@ -272,4 +272,107 @@ body {
     .btn-close {
         filter: invert(1) grayscale(100%) brightness(200%);
     }
+}
+
+/* =========================================
+   STUNNING UI OVERHAUL ADDITIONS
+   ========================================= */
+
+/* Dynamic Animated Gradient Background */
+.hero-animated-bg {
+    background: linear-gradient(-45deg, #E76F51, #F4A261, #2A9D8F, #E9C46A);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+    position: relative;
+    overflow: hidden;
+    color: white;
+    border-radius: 24px;
+}
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+.hero-animated-bg::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    z-index: 0;
+}
+.hero-content {
+    position: relative;
+    z-index: 1;
+}
+
+/* Stunning Typography */
+.text-huge {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 800;
+    letter-spacing: -1.5px;
+    line-height: 1.1;
+    text-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+/* Pinterest-Style Masonry Grid */
+.masonry-grid {
+    column-count: 3;
+    column-gap: 1.5rem;
+}
+@media (max-width: 992px) {
+    .masonry-grid { column-count: 2; }
+}
+@media (max-width: 576px) {
+    .masonry-grid { column-count: 1; }
+}
+
+.masonry-item {
+    break-inside: avoid;
+    margin-bottom: 1.5rem;
+    display: block;
+}
+
+/* Elevated Resource Card */
+.resource-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    overflow: hidden;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
+    box-shadow: 0 8px 32px var(--shadow-color);
+}
+.resource-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 15px 45px rgba(231, 111, 81, 0.15);
+}
+.resource-card img {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    transition: transform 0.5s ease;
+}
+.resource-card:hover img {
+    transform: scale(1.05);
+}
+.img-wrapper {
+    overflow: hidden;
+    position: relative;
+}
+.category-badge-floating {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 2;
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.85);
+    color: #264653;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+[data-bs-theme="dark"] .category-badge-floating {
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
 }

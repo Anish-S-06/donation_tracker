@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}My Profile - Donation Tracker{% endblock %}
+{% block title %}My Profile - Seva Sankalp{% endblock %}
 
 {% block content %}
 <div class="row mt-4">
@@ -252,107 +252,7 @@
         </div>
         {% endif %}
 
-        <!-- REQUEST MANAGEMENT -->
-        <div class="card premium-card border-0 p-4 mt-4">
-            <h5 class="fw-bold mb-4">Request Management</h5>
-
-                <h6 class="text-muted mb-3">Requests for My Items</h6>
-                {% if not incoming_requests %}
-                    <p class="text-muted small">No requests yet.</p>
-                {% else %}
-                    <ul class="list-group list-group-flush">
-                    {% for req in incoming_requests %}
-                        <li class="list-group-item bg-transparent border-bottom border-light px-0 py-3">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="mb-0 fw-bold">{{ req.resource.title if req.resource else 'Deleted Resource' }}</h6>
-                                    <small class="text-muted">Requested by User ID: {{ req.receiver_id }}</small>
-                                </div>
-                                <div class="d-flex gap-2">
-                                    {% if req.status == 'Pending' %}
-                                        {% if req.resource and req.resource.status == 'Available' %}
-                                            <form method="POST" action="{{ url_for('request_routes.accept_request', req_id=req.id) }}">
-                                                <button class="btn btn-sm btn-success">Accept</button>
-                                            </form>
-                                            <form method="POST" action="{{ url_for('request_routes.reject_request', req_id=req.id) }}">
-                                                <button class="btn btn-sm btn-outline-danger">Reject</button>
-                                            </form>
-                                        {% else %}
-                                            <span class="badge bg-secondary">Pending (Resource Unavailable)</span>
-                                        {% endif %}
-                                    {% elif req.status == 'Accepted' %}
-                                        <span class="badge bg-primary align-self-center">Accepted</span>
-                                        {% if req.resource %}
-                                            <button class="btn btn-sm btn-outline-primary chat-btn" data-req-id="{{ req.id }}" data-title="{{ req.resource.title }}">Chat</button>
-                                        {% endif %}
-                                        <form method="POST" action="{{ url_for('request_routes.unfulfill_request', req_id=req.id) }}">
-                                            <button class="btn btn-sm btn-outline-warning">Unfulfill</button>
-                                        </form>
-                                        <form method="POST" action="{{ url_for('request_routes.fulfill_request', req_id=req.id) }}">
-                                            <button class="btn btn-sm btn-info text-white">Mark Fulfilled</button>
-                                        </form>
-                                    {% elif req.status == 'Fulfilled' %}
-                                        <span class="badge bg-info align-self-center">Fulfilled</span>
-                                        {% if req.resource %}
-                                            <button class="btn btn-sm btn-outline-primary chat-btn" data-req-id="{{ req.id }}" data-title="{{ req.resource.title }}">Chat</button>
-                                        {% endif %}
-                                        {% if req.history and not req.history.receiver_rating %}
-                                            <form method="POST" action="{{ url_for('request_routes.rate_exchange', history_id=req.history.id) }}" class="d-flex align-items-center gap-2">
-                                                <input type="number" name="rating" min="1" max="5" class="form-control form-control-sm" style="width: 60px;" placeholder="1-5" required>
-                                                <button class="btn btn-sm btn-warning">Rate</button>
-                                            </form>
-                                        {% elif req.history and req.history.receiver_rating %}
-                                            <span class="text-warning small fw-bold">Rated: {{ req.history.receiver_rating }} ★</span>
-                                        {% endif %}
-                                    {% else %}
-                                        <span class="badge bg-secondary">{{ req.status }}</span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </li>
-                    {% endfor %}
-                    </ul>
-                {% endif %}
-                
-                <h6 class="text-muted mb-3 mt-4">My Requests for Items</h6>
-                {% if not outgoing_requests %}
-                    <p class="text-muted small">You haven't requested anything yet.</p>
-                {% else %}
-                    <ul class="list-group list-group-flush">
-                    {% for req in outgoing_requests %}
-                        <li class="list-group-item bg-transparent border-bottom border-light px-0 py-3">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="mb-0 fw-bold">{{ req.resource.title if req.resource else 'Deleted Resource' }}</h6>
-                                    <small class="text-muted">Status: 
-                                        {% if req.status == 'Pending' and (not req.resource or req.resource.status != 'Available') %}
-                                            <span class="badge bg-secondary">Item Unavailable</span>
-                                        {% else %}
-                                            <span class="badge bg-{{ 'warning' if req.status == 'Pending' else 'success' if req.status in ['Accepted', 'Fulfilled'] else 'danger' }}">{{ req.status }}</span>
-                                        {% endif %}
-                                    </small>
-                                </div>
-                                <div class="d-flex gap-2">
-                                    {% if req.status in ['Accepted', 'Fulfilled'] and req.resource %}
-                                        <button class="btn btn-sm btn-outline-primary chat-btn align-self-center" data-req-id="{{ req.id }}" data-title="{{ req.resource.title }}">Chat</button>
-                                    {% endif %}
-                                    {% if req.status == 'Fulfilled' %}
-                                        {% if req.history and not req.history.donor_rating %}
-                                            <form method="POST" action="{{ url_for('request_routes.rate_exchange', history_id=req.history.id) }}" class="d-flex align-items-center gap-2">
-                                                <input type="number" name="rating" min="1" max="5" class="form-control form-control-sm" style="width: 60px;" placeholder="1-5" required>
-                                                <button class="btn btn-sm btn-warning">Rate Donor</button>
-                                            </form>
-                                        {% elif req.history and req.history.donor_rating %}
-                                            <span class="text-warning small fw-bold">Rated: {{ req.history.donor_rating }} ★</span>
-                                        {% endif %}
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </li>
-                    {% endfor %}
-                    </ul>
-                {% endif %}
-        </div>
+        <!-- REQUEST MANAGEMENT HAS BEEN MOVED TO MY RESOURCES PAGE -->
 
     </div>
 </div>

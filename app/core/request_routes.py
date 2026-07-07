@@ -16,6 +16,15 @@ def send_request(resource_id):
     if current_user.verification_status != 'approved':
         flash("Your account is pending admin approval.", "warning")
         return redirect(url_for('search_routes.search_page'))
+        
+    pending_impact = DonationHistory.query.join(DonationRequest).filter(
+        DonationRequest.receiver_id == current_user.id,
+        DonationHistory.receipt_photo == None
+    ).first()
+    
+    if pending_impact:
+        flash("You must upload Impact Proof (receipt photo) for your previously fulfilled requests before requesting new items.", "danger")
+        return redirect(url_for('profile_routes.profile'))
 
     resource = db.session.get(Resource, resource_id)
     if not resource or resource.status != 'Available':
