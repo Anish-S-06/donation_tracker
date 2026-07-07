@@ -44,20 +44,28 @@
                 <div class="offcanvas-body">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                         <li class="nav-item">
-                            <a class="nav-link active fw-medium" href="{{ url_for('frontend_routes.index') }}">Home</a>
+                            <a class="nav-link fw-medium {% if request.endpoint == 'frontend_routes.index' %}active text-primary fw-bold{% endif %}" href="{{ url_for('frontend_routes.index') }}">Home</a>
                         </li>
                         <li class="nav-item d-none d-lg-flex align-items-center">
                             <span class="text-muted mx-2 fw-light opacity-50">|</span>
                         </li>
+                        {% if current_user.is_authenticated %}
                         <li class="nav-item">
-                            <a class="nav-link fw-medium text-primary" href="{{ url_for('search_routes.search_page') }}">Search & Map</a>
+                            <a class="nav-link fw-medium {% if request.endpoint == 'frontend_routes.support_ngos' %}active text-primary fw-bold{% endif %}" href="{{ url_for('frontend_routes.support_ngos') }}">Support NGOs</a>
+                        </li>
+                        <li class="nav-item d-none d-lg-flex align-items-center">
+                            <span class="text-muted mx-2 fw-light opacity-50">|</span>
+                        </li>
+                        {% endif %}
+                        <li class="nav-item">
+                            <a class="nav-link fw-medium {% if request.endpoint == 'search_routes.search_page' %}active text-primary fw-bold{% else %}text-primary{% endif %}" href="{{ url_for('search_routes.search_page') }}">Search & Map</a>
                         </li>
                         {% if current_user.is_authenticated and current_user.role == 'user' %}
                         <li class="nav-item d-none d-lg-flex align-items-center">
                             <span class="text-muted mx-2 fw-light opacity-50">|</span>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link fw-medium text-success" href="{{ url_for('resource_routes.my_resources') }}">My Resources</a>
+                            <a class="nav-link fw-medium {% if request.endpoint == 'resource_routes.my_resources' %}active text-success fw-bold{% else %}text-success{% endif %}" href="{{ url_for('resource_routes.my_resources') }}">My Resources</a>
                         </li>
                         {% endif %}
                     </ul>
@@ -126,13 +134,19 @@
                 {% for category, message in messages %}
                     Toastify({
                         text: "{{ message }}",
-                        duration: 3000,
+                        duration: 3500,
+                        close: true,
                         gravity: "top",
-                        position: "right",
+                        position: "center",
+                        stopOnFocus: false,
+                        offset: {
+                            y: 70 // Push down below navbar
+                        },
                         style: {
-                            background: "{{ 'linear-gradient(to right, #2A9D8F, #48bcae)' if category == 'success' else 'linear-gradient(to right, #E76F51, #f4a261)' }}",
+                            background: "{{ 'linear-gradient(to right, var(--brand-success-start), var(--brand-success-end))' if category == 'success' else 'linear-gradient(to right, #E76F51, #f4a261)' }}",
                             borderRadius: "10px",
-                            boxShadow: "0 4px 12px rgba(0,0,0,0.15)"
+                            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                            padding: "12px 20px"
                         }
                     }).showToast();
                 {% endfor %}

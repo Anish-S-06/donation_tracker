@@ -3,6 +3,60 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+.custom-leaflet-icon { background: transparent; border: none; }
+.custom-map-marker {
+    background: white;
+    border-radius: 12px;
+    padding: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 2px solid var(--brand-primary-start);
+    position: relative;
+    transition: transform 0.2s;
+}
+.custom-map-marker:hover { transform: scale(1.1); z-index: 1000; }
+.custom-map-marker::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 8px 8px 0;
+    border-style: solid;
+    border-color: var(--brand-primary-start) transparent transparent transparent;
+}
+.marker-img {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+.marker-icon {
+    width: 48px;
+    height: 48px;
+    background: #e2e8f0;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #64748b;
+}
+.marker-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-top: 4px;
+    color: #0f172a;
+    text-align: center;
+    max-width: 56px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -82,7 +136,7 @@ document.addEventListener("DOMContentLoaded", function() {
     let userLng = null;
 
     // Get user location
-    if (navigator.geolocation) {
+    if (navigator.geolocation && window.isSecureContext) {
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 userLat = position.coords.latitude;
@@ -96,12 +150,24 @@ document.addEventListener("DOMContentLoaded", function() {
 
                 fetchResources();
             },
-            () => {
-                alert("Geolocation failed. Showing all global resources.");
+            (error) => {
+                console.warn("Geolocation Error:", error);
+                Toastify({
+                    text: "Could not get your location. Showing global resources.",
+                    duration: 4000, close: true, gravity: "top", position: "center",
+                    style: { background: "#E76F51", borderRadius: "10px", padding: "12px 20px" }
+                }).showToast();
                 fetchResources();
-            }
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
     } else {
+        console.warn("Geolocation not supported or not secure context.");
+        Toastify({
+            text: "Location access requires HTTPS or localhost. Showing global resources.",
+            duration: 5000, close: true, gravity: "top", position: "center",
+            style: { background: "#E76F51", borderRadius: "10px", padding: "12px 20px" }
+        }).showToast();
         fetchResources();
     }
 
@@ -150,7 +216,24 @@ document.addEventListener("DOMContentLoaded", function() {
                 data.forEach(r => {
                     // Map Marker
                     if(r.lat && r.lng) {
-                        const marker = L.marker([r.lat, r.lng]).addTo(markers);
+                        let iconInner = r.image 
+                            ? `<img src="/static/${r.image}" class="marker-img">`
+                            : `<div class="marker-icon"><i class="fs-4">🎁</i></div>`;
+                        
+                        let customIconHtml = `
+                            <div class="custom-map-marker">
+                                ${iconInner}
+                                <div class="marker-title">${r.title}</div>
+                            </div>
+                        `;
+                        const customIcon = L.divIcon({
+                            html: customIconHtml,
+                            className: 'custom-leaflet-icon',
+                            iconSize: [60, 70],
+                            iconAnchor: [30, 70],
+                            popupAnchor: [0, -70]
+                        });
+                        const marker = L.marker([r.lat, r.lng], {icon: customIcon}).addTo(markers);
                         let imgHtml = r.image ? `<img src="/static/${r.image}" class="img-fluid rounded mb-2" style="max-height: 120px; object-fit: cover; width: 100%;">` : '';
                         marker.bindPopup(`
                             <div style="min-width: 180px;">

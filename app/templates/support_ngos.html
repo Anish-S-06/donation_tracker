@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block title %}Seva Sankalp - Support NGOs{% endblock %}
+
+{% block content %}
+<div class="row mb-4 mt-2">
+    <div class="col-12 text-center text-md-start">
+        <h2 class="fw-bold text-gradient mb-2">Support Verified NGOs</h2>
+        <p class="text-muted fs-5">Donate directly via UPI to these trusted organizations and help make a difference in your community.</p>
+    </div>
+</div>
+
+<div class="row g-4 mb-5" data-aos="fade-up" data-aos-delay="100">
+    {% if ngos %}
+        {% for ngo in ngos %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card premium-card h-100 border-0 shadow-sm p-3">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex align-items-center mb-3">
+                        {% if ngo.ngo_image %}
+                        <img src="{{ url_for('static', filename=ngo.ngo_image) }}" alt="NGO Profile" class="rounded-circle me-3 object-fit-cover shadow-sm border" style="width: 50px; height: 50px;">
+                        {% else %}
+                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3 border" style="width: 50px; height: 50px;">
+                            <i class="fs-4">🤝</i>
+                        </div>
+                        {% endif %}
+                        <h5 class="fw-bold text-dark mb-0">{{ ngo.ngo_name or ngo.email }}</h5>
+                    </div>
+                    <p class="text-muted fs-7 mb-4 flex-grow-1">{{ ngo.ngo_description or 'Working towards a better community.' }}</p>
+                    
+                    {% if ngo.gallery_images %}
+                    <div id="carouselNGO{{ ngo.id }}" class="carousel slide mb-3 rounded-3 overflow-hidden shadow-sm border" data-bs-ride="carousel">
+                        <div class="carousel-inner">
+                            {% for img in ngo.gallery_images %}
+                            <div class="carousel-item {% if loop.first %}active{% endif %}">
+                                <img src="{{ url_for('static', filename=img.image_path) }}" class="d-block w-100 object-fit-cover" style="height: 180px;" alt="Gallery">
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#carouselNGO{{ ngo.id }}" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Previous</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#carouselNGO{{ ngo.id }}" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Next</span>
+                        </button>
+                    </div>
+                    {% endif %}
+                    
+                    {% if ngo.upi_id %}
+                        <!-- Mobile UPI deep link -->
+                        <a href="upi://pay?pa={{ ngo.upi_id }}&pn={{ ngo.ngo_name or 'NGO' }}&cu=INR" class="btn btn-gradient-primary w-100 py-2 rounded-pill fw-bold mb-3 d-md-none" onclick="trackUPIClick({{ ngo.id }})">
+                            Donate via UPI App
+                        </a>
+                        <!-- Desktop QR Code & ID (Hidden on mobile) -->
+                        <div class="bg-white rounded-3 p-3 text-center border mt-auto d-none d-md-block shadow-sm upi-container" onclick="trackUPIClick({{ ngo.id }})" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                            <span class="fs-7 text-muted d-block mb-2 text-uppercase fw-bold">Scan to Donate</span>
+                            <div class="d-flex justify-content-center mb-2">
+                                <div class="upi-qr-code" data-upi="upi://pay?pa={{ ngo.upi_id }}&pn={{ ngo.ngo_name or 'NGO' }}&cu=INR"></div>
+                            </div>
+                            <strong class="text-primary fs-6">{{ ngo.upi_id }}</strong>
+                        </div>
+                    {% else %}
+                        <button class="btn btn-secondary w-100 py-2 rounded-pill fw-bold disabled mt-auto">UPI Not Available</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12 text-center text-muted py-5">
+            <div class="mb-3" style="font-size: 3rem;">🏢</div>
+            <h4 class="fw-bold text-dark">No NGOs Available Yet</h4>
+            <p>We are currently verifying our NGO partners. Check back soon!</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- QRCode.js Library for frontend QR generation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Generate QR codes for all NGO cards
+    const qrContainers = document.querySelectorAll('.upi-qr-code');
+    qrContainers.forEach(container => {
+        const upiString = container.getAttribute('data-upi');
+        new QRCode(container, {
+            text: upiString,
+            width: 120,
+            height: 120,
+            colorDark : "#2563eb", // Trust Blue
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.M
+        });
+    });
+});
+
+async function trackUPIClick(ngoId) {
+    try {
+        await fetch(`/profile/api/track-upi-click/${ngoId}`, { method: 'POST' });
+    } catch(e) {
+        console.error('Tracking failed', e);
+    }
+}
+</script>
+{% endblock %}

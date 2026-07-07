@@ -55,7 +55,12 @@
         </div>
     </div>
 </div>
-
+<div class="row mb-3 mt-4">
+    <div class="col-12 text-center">
+        <h4 class="fw-bold text-gradient mb-1">Support Verified NGOs</h4>
+        <p class="text-muted fs-7">Donate directly via UPI to these trusted organizations.</p>
+    </div>
+</div>
 <div class="row g-4 mb-5" data-aos="fade-up" data-aos-delay="100">
     {% if ngos %}
         {% for ngo in ngos %}
@@ -122,7 +127,11 @@
         </div>
     {% endif %}
 </div>
+{% endif %}
 
+
+
+{% if not current_user.is_authenticated %}
 <!-- Sign Up CTA Section -->
 <hr class="my-5" style="opacity: 0.1;" data-aos="fade-in">
 <div class="row align-items-center mb-5 premium-card p-5 border-0 shadow-sm" data-aos="fade-up" data-aos-delay="200" style="border-radius: 24px;">
@@ -155,7 +164,7 @@
                 </div>
                 
                 {% if current_user.role == 'user' %}
-                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 p-3 bg-gradient-light rounded-4 border border-light shadow-sm" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 p-3 bg-light rounded-4 border border-light shadow-sm">
                     <div>
                         <h6 class="fw-bold mb-1 text-dark">Want to create a resource?</h6>
                         <p class="text-muted small mb-0 mb-sm-0 mb-2">Share an item with the community and make an impact.</p>

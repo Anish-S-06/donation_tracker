@@ -15,3 +15,9 @@ def index():
     top_donors = User.query.filter_by(role='user').order_by(User.points_balance.desc()).limit(5).all()
     
     return render_template('index.html', resources=resources, ngos=ngos, top_donors=top_donors)
+
+@frontend_bp.route('/support-ngos')
+def support_ngos():
+    # Fetch all verified NGOs
+    ngos = User.query.filter_by(is_ngo=True, verification_status='approved').all()
+    return render_template('support_ngos.html', ngos=ngos)
