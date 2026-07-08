@@ -479,7 +479,7 @@
         
         input.value = '';
         try {
-            const res = await fetch(`/api/chat/${reqId}`, {
+            const res = await fetch(`/request/${reqId}/messages`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({content})
@@ -496,7 +496,7 @@
         const reqId = document.getElementById('chatRequestId').value;
         const container = document.getElementById('chatMessages');
         try {
-            const res = await fetch(`/api/chat/${reqId}`);
+            const res = await fetch(`/request/${reqId}/messages`);
             if(res.ok) {
                 const messages = await res.json();
                 container.innerHTML = '';

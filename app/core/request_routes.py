@@ -195,6 +195,7 @@ def get_messages(req_id):
     result = [{
         'id': m.id,
         'sender_id': m.sender_id,
+        'sender_name': m.sender.email.split('@')[0],
         'content': m.content,
         'created_at': m.created_at.isoformat(),
         'is_me': m.sender_id == current_user.id
