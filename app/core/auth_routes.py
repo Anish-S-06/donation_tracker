@@ -261,11 +261,12 @@ def verify_email(token):
 @auth_bp.route('/resend-otp', methods=['POST'])
 def resend_otp():
 
-    email = session.get('email')
-
-    if not email:
+    pending_user = session.get('pending_user')
+    if not pending_user:
         flash("Session expired", "danger")
         return redirect(url_for('auth_routes.register'))
+        
+    email = pending_user.get('email')
 
     otp = generate_otp()
     otp_store[email] = {"otp": otp, "time": time.time()}

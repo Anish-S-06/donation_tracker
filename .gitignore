@@ -4,7 +4,7 @@ env/
 ENV/
 env.bak/
 venv.bak/
-NGROK_AUTH_TOKEN=3EZASOT59onM51AELCVye8BWPwO_6qWDPNMuBLCH3WUX3oiyq
+
 # Python compiled files
 __pycache__/
 *.py[cod]
