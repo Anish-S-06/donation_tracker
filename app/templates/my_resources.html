@@ -134,7 +134,14 @@
                                             {% endif %}
                                             {% if req.history and not req.history.receiver_rating %}
                                                 <form method="POST" action="{{ url_for('request_routes.rate_exchange', history_id=req.history.id) }}" class="d-flex align-items-center gap-2">
-                                                    <input type="number" name="rating" min="1" max="5" class="form-control form-control-sm" style="width: 60px;" placeholder="1-5" required>
+                                                    <select name="rating" class="form-select form-select-sm" style="width: auto;" required>
+                                                        <option value="" disabled selected>Rate</option>
+                                                        <option value="5">5 ★</option>
+                                                        <option value="4">4 ★</option>
+                                                        <option value="3">3 ★</option>
+                                                        <option value="2">2 ★</option>
+                                                        <option value="1">1 ★</option>
+                                                    </select>
                                                     <button class="btn btn-sm btn-warning">Rate</button>
                                                 </form>
                                             {% elif req.history and req.history.receiver_rating %}
@@ -218,7 +225,14 @@
                                         {% if req.status == 'Fulfilled' %}
                                             {% if req.history and not req.history.donor_rating %}
                                                 <form method="POST" action="{{ url_for('request_routes.rate_exchange', history_id=req.history.id) }}" class="d-flex align-items-center gap-2">
-                                                    <input type="number" name="rating" min="1" max="5" class="form-control form-control-sm" style="width: 60px;" placeholder="1-5" required>
+                                                    <select name="rating" class="form-select form-select-sm" style="width: auto;" required>
+                                                        <option value="" disabled selected>Rate</option>
+                                                        <option value="5">5 ★</option>
+                                                        <option value="4">4 ★</option>
+                                                        <option value="3">3 ★</option>
+                                                        <option value="2">2 ★</option>
+                                                        <option value="1">1 ★</option>
+                                                    </select>
                                                     <button class="btn btn-sm btn-warning">Rate Donor</button>
                                                 </form>
                                             {% elif req.history and req.history.donor_rating %}
@@ -525,5 +539,12 @@
             console.error(e);
         }
     }
+    
+    // Fix nested modal z-index issues by moving all modals to the body
+    document.addEventListener("DOMContentLoaded", function() {
+        document.querySelectorAll('.modal').forEach(modal => {
+            document.body.appendChild(modal);
+        });
+    });
 </script>
 {% endblock %}
