@@ -131,7 +131,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }).addTo(map);
 
     let markers = L.layerGroup().addTo(map);
-    let userCircle = null;
+    let userMarker = null;
     let userLat = null;
     let userLng = null;
 
@@ -144,9 +144,9 @@ document.addEventListener("DOMContentLoaded", function() {
                 map.setView([userLat, userLng], 12);
                 
                 // Add marker for user
-                L.circleMarker([userLat, userLng], {
+                userMarker = L.circleMarker([userLat, userLng], {
                     color: 'blue', radius: 8, fillOpacity: 1
-                }).addTo(map).bindPopup("<b>You are here</b>");
+                }).addTo(map).bindPopup("<b>You are here</b><br><small class='text-muted'>Desktop PC? Click map to fix location.</small>").openPopup();
 
                 fetchResources();
             },
@@ -170,6 +170,23 @@ document.addEventListener("DOMContentLoaded", function() {
         }).showToast();
         fetchResources();
     }
+
+    // Allow user to manually set location by clicking on the map (Fix for Desktop PCs without GPS)
+    map.on('click', function(e) {
+        userLat = e.latlng.lat;
+        userLng = e.latlng.lng;
+        
+        if (userMarker) {
+            userMarker.setLatLng([userLat, userLng]);
+        } else {
+            userMarker = L.circleMarker([userLat, userLng], {
+                color: 'blue', radius: 8, fillOpacity: 1
+            }).addTo(map);
+        }
+        
+        userMarker.bindPopup("<b>Custom Location Set!</b><br><small>Searching near this spot.</small>").openPopup();
+        fetchResources(); // Re-fetch resources based on the new custom location
+    });
 
     // Form Submission
     document.getElementById('searchForm').addEventListener('submit', function(e) {
