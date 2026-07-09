@@ -255,3 +255,54 @@ def delete_rating(user_id):
         db.session.commit()
         flash("Your rating has been removed.", "info")
     return redirect(url_for('profile_routes.public_profile', user_id=user_id))
+
+@profile_bp.route('/delete-account', methods=['POST'])
+@login_required
+def delete_account():
+    user = db.session.get(User, current_user.id)
+    if not user:
+        return redirect(url_for('auth_routes.login'))
+        
+    from app.models import Message, DonationHistory, Request as DonationRequest, Resource, PointsTransaction, UPIDonationClick, NGOGalleryImage, UserRating
+    
+    # 1. User Ratings
+    UserRating.query.filter((UserRating.rater_id == user.id) | (UserRating.rated_user_id == user.id)).delete(synchronize_session=False)
+    
+    # 2. NGO specific
+    NGOGalleryImage.query.filter_by(ngo_id=user.id).delete(synchronize_session=False)
+    UPIDonationClick.query.filter((UPIDonationClick.donor_id == user.id) | (UPIDonationClick.ngo_id == user.id)).delete(synchronize_session=False)
+    
+    # 3. Points
+    PointsTransaction.query.filter_by(user_id=user.id).delete(synchronize_session=False)
+    
+    # 4. Messages (sent by user)
+    Message.query.filter_by(sender_id=user.id).delete(synchronize_session=False)
+    
+    # 5. Requests where user is receiver
+    user_requests = DonationRequest.query.filter_by(receiver_id=user.id).all()
+    user_request_ids = [r.id for r in user_requests]
+    if user_request_ids:
+        DonationHistory.query.filter(DonationHistory.request_id.in_(user_request_ids)).delete(synchronize_session=False)
+        Message.query.filter(Message.request_id.in_(user_request_ids)).delete(synchronize_session=False)
+        DonationRequest.query.filter_by(receiver_id=user.id).delete(synchronize_session=False)
+        
+    # 6. Resources where user is donor
+    user_resources = Resource.query.filter_by(donor_id=user.id).all()
+    user_resource_ids = [r.id for r in user_resources]
+    if user_resource_ids:
+        reqs = DonationRequest.query.filter(DonationRequest.resource_id.in_(user_resource_ids)).all()
+        req_ids = [r.id for r in reqs]
+        if req_ids:
+            DonationHistory.query.filter(DonationHistory.request_id.in_(req_ids)).delete(synchronize_session=False)
+            Message.query.filter(Message.request_id.in_(req_ids)).delete(synchronize_session=False)
+            DonationRequest.query.filter(DonationRequest.resource_id.in_(user_resource_ids)).delete(synchronize_session=False)
+        Resource.query.filter_by(donor_id=user.id).delete(synchronize_session=False)
+        
+    db.session.delete(user)
+    db.session.commit()
+    
+    from flask_login import logout_user
+    logout_user()
+    
+    flash("Your account and all associated data have been completely deleted.", "success")
+    return redirect(url_for('frontend_routes.index'))

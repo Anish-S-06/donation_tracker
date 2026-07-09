@@ -76,6 +76,13 @@
                 </form>
                 {% endif %}
 
+                <hr class="my-4">
+                <form action="{{ url_for('profile_routes.delete_account') }}" method="POST" onsubmit="return confirm('Are you absolutely sure you want to delete your account? This action cannot be undone and will delete all your listed resources and requests.')">
+                    <button class="btn btn-outline-danger btn-sm w-100 fw-bold">
+                        <i class="bi bi-trash"></i> Delete Account
+                    </button>
+                </form>
+
             </div>
         </div>
     </div>
