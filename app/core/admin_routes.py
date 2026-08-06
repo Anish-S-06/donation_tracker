@@ -16,6 +16,7 @@ admin_bp = Blueprint('admin_routes', __name__, url_prefix='/admin')
 def dashboard():
 
     users = User.query.filter_by(is_email_verified=True).all()
+    resources = Resource.query.all()
 
     kpis = {
         'total_users': User.query.count(),
@@ -24,7 +25,7 @@ def dashboard():
         'fulfilled_donations': DonationRequest.query.filter_by(status='Fulfilled').count(),
     }
 
-    return render_template('admin_dashboard.html', users=users, kpis=kpis)
+    return render_template('admin_dashboard.html', users=users, resources=resources, kpis=kpis)
 
 
 # ======================================================

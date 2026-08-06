@@ -43,6 +43,9 @@ def api_resources():
             distance = haversine(lat, lng, r.location_lat, r.location_lng)
             if radius and distance > radius:
                 continue
+        elif radius:
+            # If filtering by radius but we can't calculate distance (e.g. resource has no location), exclude it
+            continue
                 
         results.append({
             'id': r.id,

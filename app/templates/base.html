@@ -58,7 +58,7 @@
                         </li>
                         {% endif %}
                         <li class="nav-item">
-                            <a class="nav-link fw-medium {% if request.endpoint == 'search_routes.search_page' %}active text-primary fw-bold{% else %}text-primary{% endif %}" href="{{ url_for('search_routes.search_page') }}">Search & Map</a>
+                            <a class="nav-link fw-medium {% if request.endpoint == 'search_routes.search_page' %}active text-primary fw-bold{% else %}text-primary{% endif %}" href="{{ url_for('search_routes.search_page') }}">Filter & Map</a>
                         </li>
                         {% if current_user.is_authenticated and current_user.role == 'user' %}
                         <li class="nav-item d-none d-lg-flex align-items-center">
