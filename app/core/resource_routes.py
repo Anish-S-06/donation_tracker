@@ -156,11 +156,12 @@ def delete_resource(resource_id):
     if current_user.id != resource.donor_id and current_user.role != 'admin':
         return jsonify({'error': 'Unauthorized'}), 403
         
-    from app.models import Request as DonationRequest, DonationHistory
-    # Delete histories of requests first
+    from app.models import Request as DonationRequest, DonationHistory, Message
+    # Delete histories and messages of requests first
     reqs = DonationRequest.query.filter_by(resource_id=resource_id).all()
     for req in reqs:
         DonationHistory.query.filter_by(request_id=req.id).delete()
+        Message.query.filter_by(request_id=req.id).delete()
     
     # Delete requests
     DonationRequest.query.filter_by(resource_id=resource_id).delete()
