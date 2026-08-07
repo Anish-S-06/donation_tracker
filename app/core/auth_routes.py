@@ -315,6 +315,9 @@ def login():
             flash("NGO Account pending admin approval", "warning")
             return redirect(url_for('auth_routes.login'))
         # 5. LOGIN SUCCESS
+        user.last_login_ip = request.remote_addr
+        db.session.commit()
+        
         login_user(user, remember=remember)
 
         flash("Login successful!", "success")

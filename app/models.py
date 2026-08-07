@@ -28,6 +28,7 @@ class User(UserMixin, db.Model):
     ngo_description = db.Column(db.Text, nullable=True)
     ngo_image = db.Column(db.String(255), nullable=True)
     upi_id = db.Column(db.String(100), nullable=True)
+    last_login_ip = db.Column(db.String(45), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     resources = db.relationship('Resource', backref='donor', lazy=True)

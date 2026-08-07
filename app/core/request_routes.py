@@ -107,6 +107,7 @@ def unfulfill_request(req_id):
 @request_bp.route('/<int:req_id>/fulfill', methods=['POST'])
 @login_required
 def fulfill_request(req_id):
+    from datetime import datetime, timedelta
     req = db.session.get(DonationRequest, req_id)
     if not req or req.resource.donor_id != current_user.id:
         flash("Unauthorized.", "danger")
@@ -118,17 +119,39 @@ def fulfill_request(req_id):
     history = DonationHistory(request_id=req.id)
     db.session.add(history)
     
-    # --- Karma Points Logic ---
+    # --- Karma Points Logic (With Anti-Fraud) ---
     points_awarded = 50
-    pt = PointsTransaction(
-        user_id=current_user.id,
-        amount=points_awarded,
-        transaction_type='Earned',
-        description=f"Fulfilled request for {req.resource.title}"
-    )
-    db.session.add(pt)
+    fraud_warning = None
     
-    current_user.points_balance += points_awarded
+    # Anti-Fraud 1: IP Address Check
+    receiver = req.receiver
+    if current_user.last_login_ip and receiver.last_login_ip and current_user.last_login_ip == receiver.last_login_ip:
+        if current_user.last_login_ip != '127.0.0.1': # Allow local testing
+            points_awarded = 0
+            fraud_warning = "Points cannot be awarded for transactions between users on the same network."
+
+    # Anti-Fraud 2: Weekly Point Cap Check (Max 300 per 7 days)
+    if points_awarded > 0:
+        seven_days_ago = datetime.utcnow() - timedelta(days=7)
+        recent_transactions = PointsTransaction.query.filter(
+            PointsTransaction.user_id == current_user.id,
+            PointsTransaction.created_at >= seven_days_ago
+        ).all()
+        recent_points = sum(t.amount for t in recent_transactions)
+        
+        if recent_points + points_awarded > 300:
+            points_awarded = 0
+            fraud_warning = "You have reached your weekly maximum Karma Points cap (300 points)."
+
+    if points_awarded > 0:
+        pt = PointsTransaction(
+            user_id=current_user.id,
+            amount=points_awarded,
+            transaction_type='Earned',
+            description=f"Fulfilled request for {req.resource.title}"
+        )
+        db.session.add(pt)
+        current_user.points_balance += points_awarded
     
     # Calculate new badge level
     if current_user.points_balance >= 5000:
@@ -141,7 +164,12 @@ def fulfill_request(req_id):
         current_user.badge_level = 'Bronze'
     
     db.session.commit()
-    flash(f"Donation fulfilled! You earned {points_awarded} Karma Points. You can now rate the receiver.", "success")
+    
+    if fraud_warning:
+        flash(f"Donation fulfilled! Note: {fraud_warning}", "warning")
+    else:
+        flash(f"Donation fulfilled! You earned {points_awarded} Karma Points. You can now rate the receiver.", "success")
+        
     return redirect(url_for('profile_routes.profile'))
 
 @request_bp.route('/history/<int:history_id>/rate', methods=['POST'])
