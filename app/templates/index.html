@@ -130,6 +130,28 @@
                         </button>
                     </div>
                     {% endif %}
+
+                    <!-- Community Support & Like Bar -->
+                    <div class="d-flex align-items-center justify-content-between p-2 px-3 rounded-3 mb-3 bg-light border mt-auto">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="text-danger fs-6">❤️</span>
+                            <span class="small fw-semibold text-dark">
+                                <span id="ngo-likes-count-{{ ngo.id }}">{{ ngo.likes_count }}</span>
+                                <span class="text-muted fw-normal" style="font-size: 0.78rem;">Supporters</span>
+                            </span>
+                        </div>
+                        
+                        <!-- Interactive Like Button with Heart Symbol -->
+                        {% set user_liked = ngo.is_liked_by(current_user) %}
+                        <button type="button" 
+                                class="btn btn-sm btn-ngo-like d-inline-flex align-items-center gap-1 px-3 py-1 rounded-pill transition-all {% if user_liked %}btn-danger text-white{% else %}btn-outline-danger{% endif %}" 
+                                data-ngo-id="{{ ngo.id }}" 
+                                data-liked="{{ 'true' if user_liked else 'false' }}"
+                                onclick="handleNgoLike({{ ngo.id }}, this)">
+                            <i class="bi {% if user_liked %}bi-heart-fill{% else %}bi-heart{% endif %} heart-icon me-1"></i>
+                            <span class="like-btn-text fw-semibold" style="font-size: 0.78rem;">{% if user_liked %}Liked{% else %}Like{% endif %}</span>
+                        </button>
+                    </div>
                     
                     {% if ngo.upi_id %}
                         <!-- Mobile UPI deep link -->
@@ -137,7 +159,7 @@
                             Donate via UPI App
                         </a>
                         <!-- Desktop QR Code & ID (Hidden on mobile) -->
-                        <div class="bg-light rounded-3 p-3 text-center border mt-auto d-none d-md-block upi-container" onclick="trackUPIClick({{ ngo.id }})" style="cursor: pointer;">
+                        <div class="bg-light rounded-3 p-3 text-center border d-none d-md-block upi-container" onclick="trackUPIClick({{ ngo.id }})" style="cursor: pointer;">
                             <span class="small text-muted d-block mb-2 text-uppercase fw-semibold">Scan with any UPI App</span>
                             <div class="d-flex justify-content-center mb-2">
                                 <div class="upi-qr-code p-2 bg-white rounded border" data-upi="upi://pay?pa={{ ngo.upi_id }}&pn={{ ngo.ngo_name or 'NGO' }}&cu=INR"></div>
@@ -145,7 +167,7 @@
                             <strong class="text-primary small font-monospace">{{ ngo.upi_id }}</strong>
                         </div>
                     {% else %}
-                        <button class="btn btn-secondary w-100 py-2 fw-semibold disabled mt-auto">UPI Not Available</button>
+                        <button class="btn btn-secondary w-100 py-2 fw-semibold disabled">UPI Not Available</button>
                     {% endif %}
                 </div>
             </div>
@@ -460,6 +482,112 @@ function openResourceModal(element) {
     
     const modal = new bootstrap.Modal(document.getElementById('resourceDetailModal'));
     modal.show();
+}
+
+async function trackUPIClick(ngoId) {
+    try {
+        await fetch(`/profile/api/track-upi-click/${ngoId}`, { method: 'POST' });
+    } catch(e) {
+        console.error('Tracking failed', e);
+    }
+}
+
+async function handleNgoLike(ngoId, btn) {
+    const heartIcon = btn.querySelector('.heart-icon');
+    const labelSpan = btn.querySelector('.like-btn-text');
+    const counterSpan = document.getElementById(`ngo-likes-count-${ngoId}`);
+    
+    // Quick micro-bounce
+    btn.style.transform = 'scale(0.92)';
+    setTimeout(() => { btn.style.transform = 'none'; }, 150);
+
+    try {
+        const response = await fetch(`/api/ngo/${ngoId}/like`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const data = await response.json();
+        
+        if (response.status === 401 || data.requires_login) {
+            Toastify({
+                text: "Please sign in to like and support this NGO ❤️",
+                duration: 3500,
+                close: true,
+                gravity: "top",
+                position: "center",
+                style: {
+                    background: "#D84315",
+                    borderRadius: "10px",
+                    boxShadow: "0 4px 12px rgba(28, 40, 38, 0.15)",
+                    fontFamily: "'Plus Jakarta Sans', sans-serif"
+                }
+            }).showToast();
+            return;
+        }
+        
+        if (data.success) {
+            if (data.liked) {
+                btn.setAttribute('data-liked', 'true');
+                btn.classList.remove('btn-outline-danger');
+                btn.classList.add('btn-danger', 'text-white');
+                heartIcon.classList.remove('bi-heart');
+                heartIcon.classList.add('bi-heart-fill');
+                labelSpan.textContent = 'Liked';
+            } else {
+                btn.setAttribute('data-liked', 'false');
+                btn.classList.remove('btn-danger', 'text-white');
+                btn.classList.add('btn-outline-danger');
+                heartIcon.classList.remove('bi-heart-fill');
+                heartIcon.classList.add('bi-heart');
+                labelSpan.textContent = 'Like';
+            }
+            
+            if (counterSpan) {
+                counterSpan.textContent = data.likes_count;
+            }
+
+            // Sync other cards on page
+            document.querySelectorAll(`[id="ngo-likes-count-${ngoId}"]`).forEach(el => {
+                el.textContent = data.likes_count;
+            });
+            document.querySelectorAll(`.btn-ngo-like[data-ngo-id="${ngoId}"]`).forEach(b => {
+                if (b !== btn) {
+                    const bIcon = b.querySelector('.heart-icon');
+                    const bLabel = b.querySelector('.like-btn-text');
+                    if (data.liked) {
+                        b.setAttribute('data-liked', 'true');
+                        b.classList.remove('btn-outline-danger');
+                        b.classList.add('btn-danger', 'text-white');
+                        if (bIcon) { bIcon.classList.remove('bi-heart'); bIcon.classList.add('bi-heart-fill'); }
+                        if (bLabel) bLabel.textContent = 'Liked';
+                    } else {
+                        b.setAttribute('data-liked', 'false');
+                        b.classList.remove('btn-danger', 'text-white');
+                        b.classList.add('btn-outline-danger');
+                        if (bIcon) { bIcon.classList.remove('bi-heart-fill'); bIcon.classList.add('bi-heart'); }
+                        if (bLabel) bLabel.textContent = 'Like';
+                    }
+                }
+            });
+
+            Toastify({
+                text: data.message,
+                duration: 2500,
+                close: true,
+                gravity: "top",
+                position: "center",
+                style: {
+                    background: data.liked ? "#2E7D32" : "#4A5568",
+                    borderRadius: "10px",
+                    boxShadow: "0 4px 12px rgba(28, 40, 38, 0.15)",
+                    fontFamily: "'Plus Jakarta Sans', sans-serif"
+                }
+            }).showToast();
+        }
+    } catch(err) {
+        console.error('Error toggling like:', err);
+    }
 }
 </script>
 {% endblock %}

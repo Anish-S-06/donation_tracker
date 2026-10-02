@@ -913,3 +913,50 @@ p, span, label, input, textarea, select, table {
 .custom-map-marker::after {
     border-color: var(--color-primary) transparent transparent transparent;
 }
+
+/* ==========================================================================
+   NGO COMMUNITY LIKE BUTTON & ANIMATIONS
+   ========================================================================== */
+
+.btn-ngo-like {
+    border-radius: 50rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border-color: #E53935 !important;
+}
+
+.btn-ngo-like:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(229, 57, 53, 0.2);
+}
+
+.btn-ngo-like.btn-outline-danger {
+    color: #E53935 !important;
+    background: transparent;
+}
+
+.btn-ngo-like.btn-outline-danger:hover {
+    background-color: #FFEBEE !important;
+    color: #C62828 !important;
+}
+
+.btn-ngo-like.btn-danger {
+    background-color: #E53935 !important;
+    border-color: #E53935 !important;
+    color: #FFFFFF !important;
+}
+
+.btn-ngo-like .heart-icon {
+    font-size: 0.95rem;
+    transition: transform 0.2s ease;
+}
+
+.btn-ngo-like:active .heart-icon {
+    transform: scale(1.35);
+}
+
+[data-bs-theme="dark"] .btn-ngo-like.btn-outline-danger:hover {
+    background-color: rgba(229, 57, 53, 0.15) !important;
+}
+

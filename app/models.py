@@ -60,6 +60,15 @@ class User(UserMixin, db.Model):
     def is_approved(self):
         return self.verification_status =='approved'
 
+    @property
+    def likes_count(self):
+        return NGOLike.query.filter_by(ngo_id=self.id).count()
+
+    def is_liked_by(self, user):
+        if not user or not getattr(user, 'is_authenticated', False):
+            return False
+        return NGOLike.query.filter_by(ngo_id=self.id, user_id=user.id).first() is not None
+
 class Resource(db.Model):
     __tablename__ = 'resources'
     
@@ -158,3 +167,17 @@ class UserRating(db.Model):
     
     rater = db.relationship('User', foreign_keys=[rater_id], backref='given_ratings')
     rated_user = db.relationship('User', foreign_keys=[rated_user_id], backref='received_ratings')
+
+class NGOLike(db.Model):
+    __tablename__ = 'ngo_likes'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    ngo_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    __table_args__ = (db.UniqueConstraint('user_id', 'ngo_id', name='unique_user_ngo_like'),)
+    
+    user = db.relationship('User', foreign_keys=[user_id], backref=db.backref('liked_ngos', lazy='dynamic'))
+    ngo = db.relationship('User', foreign_keys=[ngo_id], backref=db.backref('likes_received', lazy='dynamic'))
+

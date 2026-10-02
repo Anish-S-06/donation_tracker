@@ -48,6 +48,11 @@ def run_auto_migrations(app):
                     with db.engine.begin() as conn:
                         conn.execute(text("ALTER TABLE resources ADD COLUMN requires_income_proof BOOLEAN DEFAULT 0"))
                         app.logger.info("Auto-migrated: added resources.requires_income_proof")
+
+            # Check ngo_likes table
+            if 'ngo_likes' not in existing_tables:
+                db.create_all()
+                app.logger.info("Auto-migrated: created missing tables including ngo_likes")
         except Exception as e:
             app.logger.warning(f"Auto-migration check notice: {e}")
 
