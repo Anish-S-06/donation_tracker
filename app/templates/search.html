@@ -6,14 +6,14 @@
 <style>
 .custom-leaflet-icon { background: transparent; border: none; }
 .custom-map-marker {
-    background: white;
+    background: #FFFFFF;
     border-radius: 12px;
     padding: 4px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px rgba(28, 40, 38, 0.15);
     display: flex;
     flex-direction: column;
     align-items: center;
-    border: 2px solid var(--brand-primary-start);
+    border: 2px solid var(--color-primary);
     position: relative;
     transition: transform 0.2s;
 }
@@ -26,7 +26,7 @@
     transform: translateX(-50%);
     border-width: 8px 8px 0;
     border-style: solid;
-    border-color: var(--brand-primary-start) transparent transparent transparent;
+    border-color: var(--color-primary) transparent transparent transparent;
 }
 .marker-img {
     width: 48px;
@@ -37,21 +37,21 @@
 .marker-icon {
     width: 48px;
     height: 48px;
-    background: #e2e8f0;
+    background: #F0F4F2;
     border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
-    color: #64748b;
+    color: var(--color-neutral);
 }
 .marker-title {
-    font-size: 0.7rem;
+    font-size: 0.72rem;
     font-weight: 700;
     margin-top: 4px;
-    color: #0f172a;
+    color: var(--color-neutral);
     text-align: center;
-    max-width: 56px;
+    max-width: 60px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -62,32 +62,33 @@
 {% block content %}
 <div class="row mb-4 align-items-center">
     <div class="col-md-8">
-        <h2 class="fw-bold text-gradient mb-1">Filter and Map</h2>
-        <p class="text-muted">Find available donations near you.</p>
+        <h2 class="fw-bold mb-1" style="color: var(--color-neutral);">Interactive Community Map</h2>
+        <p class="text-muted small mb-0">Discover and request local resources within your radius</p>
     </div>
 </div>
 
-<div class="row" data-aos="fade-up" data-aos-delay="100">
+<div class="row g-4" data-aos="fade-up" data-aos-delay="100">
     <!-- Filters Sidebar -->
-    <div class="col-md-3">
-        <div class="search-panel shadow-sm border-0">
-            <h5 class="fw-bold mb-3">Filters</h5>
+    <div class="col-md-4 col-lg-3">
+        <div class="card p-3 shadow-sm border mb-4">
+            <h6 class="fw-bold mb-3">Filter Directory</h6>
             <form id="searchForm">
                 <div class="mb-3">
-                    <label class="form-label">Category</label>
-                    <select class="form-select" id="category">
+                    <label class="form-label small fw-medium text-muted">Category</label>
+                    <select class="form-select form-select-sm" id="category">
                         <option value="">All Categories</option>
                         <option value="Food">Food</option>
                         <option value="Clothing">Clothing</option>
                         <option value="Electronics">Electronics</option>
                         <option value="Books">Books</option>
+                        <option value="Household">Household</option>
                         <option value="Other">Other</option>
                     </select>
                 </div>
                 
                 <div class="mb-3">
-                    <label class="form-label">Condition</label>
-                    <select class="form-select" id="condition">
+                    <label class="form-label small fw-medium text-muted">Condition</label>
+                    <select class="form-select form-select-sm" id="condition">
                         <option value="">Any Condition</option>
                         <option value="New">New</option>
                         <option value="Like New">Like New</option>
@@ -97,23 +98,23 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">Radius (km)</label>
-                    <input type="number" class="form-control" id="radius" value="10" min="1" max="500">
+                    <label class="form-label small fw-medium text-muted">Search Radius (km)</label>
+                    <input type="number" class="form-control form-control-sm" id="radius" value="10" min="1" max="500">
                 </div>
 
-                <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                <button type="submit" class="btn btn-primary btn-sm w-100 fw-semibold">Apply Filters</button>
             </form>
         </div>
         
         <!-- Results List -->
-        <div id="resultsList" class="mt-4">
-            <p class="text-muted text-center">Loading resources...</p>
+        <div id="resultsList" class="mt-3">
+            <p class="text-muted text-center small">Searching for nearby resources...</p>
         </div>
     </div>
 
     <!-- Map View -->
-    <div class="col-md-9">
-        <div id="map"></div>
+    <div class="col-md-8 col-lg-9">
+        <div id="map" class="shadow-sm border rounded-3" style="min-height: 540px;"></div>
     </div>
 </div>
 
@@ -146,8 +147,8 @@ document.addEventListener("DOMContentLoaded", function() {
                 
                 // Add marker for user
                 userMarker = L.circleMarker([userLat, userLng], {
-                    color: 'blue', radius: 8, fillOpacity: 1
-                }).addTo(map).bindPopup("<b>You are here</b><br><small class='text-muted'>Desktop PC? Click map to fix location.</small>").openPopup();
+                    color: '#D84315', radius: 8, fillOpacity: 1
+                }).addTo(map).bindPopup("<b>Your Location</b><br><small class='text-muted'>Click anywhere to change position.</small>").openPopup();
 
                 fetchResources();
             },
@@ -156,7 +157,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 Toastify({
                     text: "Could not get your location. Showing global resources.",
                     duration: 4000, close: true, gravity: "top", position: "center",
-                    style: { background: "#E76F51", borderRadius: "10px", padding: "12px 20px" }
+                    style: { background: "#D84315", borderRadius: "10px", padding: "12px 20px" }
                 }).showToast();
                 fetchResources();
             },
@@ -167,7 +168,7 @@ document.addEventListener("DOMContentLoaded", function() {
         Toastify({
             text: "Location access requires HTTPS or localhost. Showing global resources.",
             duration: 5000, close: true, gravity: "top", position: "center",
-            style: { background: "#E76F51", borderRadius: "10px", padding: "12px 20px" }
+            style: { background: "#D84315", borderRadius: "10px", padding: "12px 20px" }
         }).showToast();
         fetchResources();
     }
@@ -181,11 +182,11 @@ document.addEventListener("DOMContentLoaded", function() {
             userMarker.setLatLng([userLat, userLng]);
         } else {
             userMarker = L.circleMarker([userLat, userLng], {
-                color: 'blue', radius: 8, fillOpacity: 1
+                color: '#D84315', radius: 8, fillOpacity: 1
             }).addTo(map);
         }
         
-        userMarker.bindPopup("<b>Custom Location Set!</b><br><small>Searching near this spot.</small>").openPopup();
+        userMarker.bindPopup("<b>Location Pinned</b><br><small>Searching near this spot.</small>").openPopup();
         fetchResources(); // Re-fetch resources based on the new custom location
     });
 
@@ -216,9 +217,9 @@ document.addEventListener("DOMContentLoaded", function() {
                 // Draw radius circle
                 if(radius && userLat && userLng) {
                     userCircle = L.circle([userLat, userLng], {
-                        color: 'green',
-                        fillColor: '#3f0',
-                        fillOpacity: 0.1,
+                        color: '#2E7D32',
+                        fillColor: '#2E7D32',
+                        fillOpacity: 0.08,
                         radius: radius * 1000 // meters
                     }).addTo(map);
                 }
@@ -227,7 +228,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 listContainer.innerHTML = '';
 
                 if(data.length === 0) {
-                    listContainer.innerHTML = '<p class="text-muted text-center">No resources found in this area.</p>';
+                    listContainer.innerHTML = '<p class="text-muted text-center small py-3">No resources found in this area.</p>';
                     return;
                 }
 
@@ -253,37 +254,41 @@ document.addEventListener("DOMContentLoaded", function() {
                         });
                         const marker = L.marker([r.lat, r.lng], {icon: customIcon}).addTo(markers);
                         let imgHtml = r.image ? `<img src="/static/${r.image}" class="img-fluid rounded mb-2" style="max-height: 120px; object-fit: cover; width: 100%;">` : '';
+                        let incomeBadge = r.requires_income_proof ? '<div class="mb-1"><span class="badge bg-warning bg-opacity-10 text-dark border border-warning" style="font-size: 0.68rem;"><i class="bi bi-shield-lock-fill text-warning me-1"></i>Low-Income Only</span></div>' : '';
                         marker.bindPopup(`
                             <div style="min-width: 180px;">
                                 ${imgHtml}
-                                <h6 class="fw-bold mb-1" style="font-size: 1rem;">${r.title}</h6>
+                                <h6 class="fw-bold mb-1" style="font-size: 0.95rem;">${r.title}</h6>
+                                ${incomeBadge}
                                 <p class="mb-1 small text-muted">${r.category} • ${r.condition}</p>
-                                <p class="mb-2 small" style="max-height: 60px; overflow-y: auto; color: #555;">${r.description}</p>
+                                <p class="mb-2 small" style="max-height: 60px; overflow-y: auto; color: var(--color-neutral);">${r.description}</p>
                                 ${r.distance_km ? '<p class="mb-2 small fw-bold text-primary" style="font-size: 0.85rem;"><i class="bi bi-geo-alt"></i> ' + r.distance_km + ' km away</p>' : ''}
                                 <div class="d-flex gap-2 mt-2">
                                     <form method="POST" action="/request/${r.id}/send" class="w-100 m-0">
-                                        <button class="btn btn-sm btn-success w-100 fw-bold shadow-sm" style="border-radius: 6px;">Request Item</button>
+                                        <button class="btn btn-sm btn-primary w-100 fw-semibold" style="border-radius: 6px;">Request Item</button>
                                     </form>
-                                    <a href="/profile/public/${r.donor_id}" class="btn btn-sm btn-outline-primary shadow-sm" style="border-radius: 6px; white-space: nowrap;"><i class="bi bi-person-circle"></i> Profile</a>
+                                    <a href="/profile/public/${r.donor_id}" class="btn btn-sm btn-outline-secondary" style="border-radius: 6px; white-space: nowrap;">Profile</a>
                                 </div>
                             </div>
                         `);
                     }
 
                     // List Item
-                    const distText = r.distance_km ? `<span class="badge bg-secondary mb-2">${r.distance_km} km away</span>` : '';
+                    const distText = r.distance_km ? `<span class="badge bg-soft-primary text-primary mb-2">${r.distance_km} km away</span>` : '';
+                    let listIncomeBadge = r.requires_income_proof ? '<span class="badge bg-warning bg-opacity-10 text-dark border border-warning mb-2 ms-1" style="font-size: 0.68rem;"><i class="bi bi-shield-lock-fill text-warning me-1"></i>Low-Income Only</span>' : '';
                     
                     listContainer.innerHTML += `
-                        <div class="card mb-3 shadow-sm border-0">
+                        <div class="card mb-3 shadow-sm border">
                             <div class="card-body p-3">
                                 <h6 class="fw-bold mb-1">${r.title}</h6>
                                 <p class="text-muted small mb-2">${r.category} • ${r.condition}</p>
                                 ${distText}
+                                ${listIncomeBadge}
                                 <div class="d-flex gap-2 mt-2">
                                     <form method="POST" action="/request/${r.id}/send" class="w-100 m-0">
-                                        <button class="btn btn-sm btn-success w-100">Request Item</button>
+                                        <button class="btn btn-sm btn-primary w-100 fw-semibold">Request Item</button>
                                     </form>
-                                    <a href="/profile/public/${r.donor_id}" class="btn btn-sm btn-outline-primary"><i class="bi bi-person-circle"></i> Profile</a>
+                                    <a href="/profile/public/${r.donor_id}" class="btn btn-sm btn-outline-secondary">Profile</a>
                                 </div>
                             </div>
                         </div>

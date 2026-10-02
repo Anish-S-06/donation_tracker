@@ -9,13 +9,17 @@ request_bp = Blueprint('request_routes', __name__, url_prefix='/request')
 @request_bp.route('/<int:resource_id>/send', methods=['POST'])
 @login_required
 def send_request(resource_id):
+    from datetime import datetime, timedelta
+
+    back_url = request.referrer or url_for('search_routes.search_page')
+
     if current_user.is_ngo:
         flash("NGOs cannot request resources.", "danger")
-        return redirect(url_for('search_routes.search_page'))
+        return redirect(back_url)
         
     if current_user.verification_status != 'approved':
         flash("Your account is pending admin approval.", "warning")
-        return redirect(url_for('search_routes.search_page'))
+        return redirect(back_url)
         
     pending_impact = DonationHistory.query.join(DonationRequest).filter(
         DonationRequest.receiver_id == current_user.id,
@@ -29,7 +33,91 @@ def send_request(resource_id):
     resource = db.session.get(Resource, resource_id)
     if not resource or resource.status != 'Available':
         flash("Resource not available.", "danger")
-        return redirect(url_for('search_routes.search_page'))
+        return redirect(back_url)
+
+    if resource.donor_id == current_user.id:
+        flash("You cannot request your own listed resource.", "warning")
+        return redirect(back_url)
+
+    # Prevent duplicate active requests for the exact same resource
+    already_requested = DonationRequest.query.filter_by(
+        resource_id=resource.id,
+        receiver_id=current_user.id
+    ).filter(DonationRequest.status.in_(['Pending', 'Accepted'])).first()
+    if already_requested:
+        flash("You already have an active request for this item.", "info")
+        return redirect(back_url)
+
+    # Anti-Hoarding: Maximum 3 active pending requests across all items
+    pending_count = DonationRequest.query.filter_by(receiver_id=current_user.id, status='Pending').count()
+    if pending_count >= 3:
+        flash("🛡️ Anti-Hoarding Cap: You currently have 3 pending requests awaiting donor decisions. Please wait for donors to review those before requesting more items.", "warning")
+        return redirect(back_url)
+
+    # Low-Income Gate for High-Value / Donor-Restricted Items
+    if resource.requires_income_proof:
+        if current_user.income_verification_status != 'approved':
+            if current_user.income_verification_status == 'pending':
+                flash("🛡️ Income Verification Pending: The donor has restricted this high-value resource to verified low-income individuals. Your submitted Income Certificate is currently under Admin review.", "warning")
+            elif current_user.income_verification_status == 'rejected':
+                flash("🛡️ Income Verification Required: Your previously submitted income document was rejected. Please upload valid proof in your Profile to request this item.", "danger")
+            else:
+                flash("🛡️ Low-Income Verification Required: The donor has restricted this high-value item exclusively to verified low-income beneficiaries (EWS / BPL). Please upload your Income Certificate in your Profile to get verified.", "warning")
+            return redirect(url_for('profile_routes.profile'))
+
+    # Anti-Flipping Rule 1: Electronics / High-Value Devices (Max 1 every 12 months)
+    if resource.category == 'Electronics':
+        # Check active requests for Electronics
+        active_elec = DonationRequest.query.join(Resource).filter(
+            DonationRequest.receiver_id == current_user.id,
+            DonationRequest.status.in_(['Pending', 'Accepted']),
+            Resource.category == 'Electronics'
+        ).first()
+        if active_elec:
+            flash(f"🛡️ Category Lock: You already have an active request for an Electronics item ('{active_elec.resource.title}'). Community members can only request one electronic device at a time.", "warning")
+            return redirect(back_url)
+
+        # Check 12-month cooldown on fulfilled Electronics
+        one_year_ago = datetime.utcnow() - timedelta(days=365)
+        fulfilled_elec = DonationRequest.query.join(Resource).filter(
+            DonationRequest.receiver_id == current_user.id,
+            DonationRequest.status == 'Fulfilled',
+            Resource.category == 'Electronics',
+            DonationRequest.updated_at >= one_year_ago
+        ).order_by(DonationRequest.updated_at.desc()).first()
+
+        if fulfilled_elec:
+            days_passed = (datetime.utcnow() - fulfilled_elec.updated_at).days
+            days_left = max(1, 365 - days_passed)
+            flash(f"🛡️ Anti-Flipping Cooldown Active: You received an Electronics device ('{fulfilled_elec.resource.title}') on {fulfilled_elec.updated_at.strftime('%d %b %Y')}. To prevent commercial resale and guarantee community fairness, Electronics are limited to 1 item per 12 months. Cooldown unlocks in {days_left} days.", "warning")
+            return redirect(back_url)
+
+    # Anti-Flipping Rule 2: Household Items & Major Appliances (Max 1 every 6 months)
+    if resource.category == 'Household':
+        # Check active requests for Household
+        active_house = DonationRequest.query.join(Resource).filter(
+            DonationRequest.receiver_id == current_user.id,
+            DonationRequest.status.in_(['Pending', 'Accepted']),
+            Resource.category == 'Household'
+        ).first()
+        if active_house:
+            flash(f"🛡️ Category Lock: You already have an active request for a Household item ('{active_house.resource.title}'). Please wait until that request concludes.", "warning")
+            return redirect(back_url)
+
+        # Check 6-month cooldown on fulfilled Household items
+        six_months_ago = datetime.utcnow() - timedelta(days=180)
+        fulfilled_house = DonationRequest.query.join(Resource).filter(
+            DonationRequest.receiver_id == current_user.id,
+            DonationRequest.status == 'Fulfilled',
+            Resource.category == 'Household',
+            DonationRequest.updated_at >= six_months_ago
+        ).order_by(DonationRequest.updated_at.desc()).first()
+
+        if fulfilled_house:
+            days_passed = (datetime.utcnow() - fulfilled_house.updated_at).days
+            days_left = max(1, 180 - days_passed)
+            flash(f"🛡️ Anti-Flipping Cooldown Active: You received a Household item ('{fulfilled_house.resource.title}') on {fulfilled_house.updated_at.strftime('%d %b %Y')}. Household items are limited to 1 per 6 months. Cooldown unlocks in {days_left} days.", "warning")
+            return redirect(back_url)
 
     req = DonationRequest(resource_id=resource.id, receiver_id=current_user.id, status='Pending')
     db.session.add(req)

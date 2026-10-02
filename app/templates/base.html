@@ -6,8 +6,8 @@
     <title>{% block title %}Seva Sankalp{% endblock %}</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Google Font: Outfit -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Google Fonts: Epilogue & Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- AOS CSS -->
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <!-- Toastify CSS -->
@@ -28,80 +28,105 @@
 </head>
 <body>
 
-    <!-- Dynamic Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light navbar-custom py-3 mb-4">
+    <!-- Clean & Modern Dynamic Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-custom py-2 py-lg-3 mb-4">
         <div class="container">
-            <a class="navbar-brand navbar-brand-custom" href="{{ url_for('frontend_routes.index') }}">Seva Sankalp</a>
-            <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar">
+            <a class="navbar-brand navbar-brand-custom me-lg-4" href="{{ url_for('frontend_routes.index') }}">
+                <span class="brand-badge-dot"></span>
+                <span>Seva Sankalp</span>
+            </a>
+            
+            <button class="navbar-toggler border-0 shadow-none px-2 py-1" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             
-            <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasNavbar">
-                <div class="offcanvas-header border-bottom">
-                    <h5 class="offcanvas-title navbar-brand-custom mb-0">Menu</h5>
-                    <button type="button" class="btn-close shadow-none" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-                </div>
-                <div class="offcanvas-body">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li class="nav-item">
-                            <a class="nav-link fw-medium {% if request.endpoint == 'frontend_routes.index' %}active text-primary fw-bold{% endif %}" href="{{ url_for('frontend_routes.index') }}">Home</a>
-                        </li>
-                        <li class="nav-item d-none d-lg-flex align-items-center">
-                            <span class="text-muted mx-2 fw-light opacity-50">|</span>
-                        </li>
-                        {% if current_user.is_authenticated %}
-                        <li class="nav-item">
-                            <a class="nav-link fw-medium {% if request.endpoint == 'frontend_routes.support_ngos' %}active text-primary fw-bold{% endif %}" href="{{ url_for('frontend_routes.support_ngos') }}">Support NGOs</a>
-                        </li>
-                        <li class="nav-item d-none d-lg-flex align-items-center">
-                            <span class="text-muted mx-2 fw-light opacity-50">|</span>
-                        </li>
-                        {% endif %}
-                        <li class="nav-item">
-                            <a class="nav-link fw-medium {% if request.endpoint == 'search_routes.search_page' %}active text-primary fw-bold{% else %}text-primary{% endif %}" href="{{ url_for('search_routes.search_page') }}">Filter & Map</a>
-                        </li>
-                        {% if current_user.is_authenticated and current_user.role == 'user' %}
-                        <li class="nav-item d-none d-lg-flex align-items-center">
-                            <span class="text-muted mx-2 fw-light opacity-50">|</span>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link fw-medium {% if request.endpoint == 'resource_routes.my_resources' %}active text-success fw-bold{% else %}text-success{% endif %}" href="{{ url_for('resource_routes.my_resources') }}">My Resources</a>
-                        </li>
-                        {% endif %}
-                    </ul>
-                    
-                    <div class="d-flex align-items-center me-lg-3 mb-3 mb-lg-0">
-                        <button id="themeToggleBtn" class="btn btn-link text-decoration-none p-0 d-flex align-items-center theme-toggle" style="font-size: 1.5rem; transition: transform 0.3s;" aria-label="Toggle Dark Mode">
-                            <span id="themeIcon">☀️</span>
-                        </button>
-                    </div>
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-lg-1">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'frontend_routes.index' %}active{% endif %}" href="{{ url_for('frontend_routes.index') }}">Home</a>
+                    </li>
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'frontend_routes.support_ngos' %}active{% endif %}" href="{{ url_for('frontend_routes.support_ngos') }}">Support NGOs</a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'search_routes.search_page' %}active{% endif %}" href="{{ url_for('search_routes.search_page') }}">Filter & Map</a>
+                    </li>
+                    {% if current_user.is_authenticated and current_user.role == 'user' %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'resource_routes.my_resources' %}active{% endif %}" href="{{ url_for('resource_routes.my_resources') }}">My Resources</a>
+                    </li>
+                    {% endif %}
+                </ul>
+                
+                <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
+                    <!-- Dark/Light Theme Toggle -->
+                    <button id="themeToggleBtn" class="btn btn-icon theme-toggle me-1" aria-label="Toggle Dark Mode" title="Toggle theme">
+                        <span id="themeIcon">☀️</span>
+                    </button>
 
-                    <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-3 gap-lg-0 mt-4 mt-lg-0">
-                        {% if current_user.is_authenticated %}
-                            <a class="d-flex align-items-center text-decoration-none text-dark me-lg-3" href="{{ url_for('profile_routes.profile') }}">
+                    {% if current_user.is_authenticated %}
+                        <!-- Modern User Account Dropdown -->
+                        <div class="dropdown">
+                            <button class="btn btn-user-menu dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 {% if current_user.profile_photo %}
-                                    <img src="{{ url_for('static', filename=current_user.profile_photo) }}" alt="Profile" class="profile-thumb me-2">
+                                    <img src="{{ url_for('static', filename=current_user.profile_photo) }}" alt="Profile" class="profile-thumb">
                                 {% else %}
-                                    <div class="d-inline-flex justify-content-center align-items-center bg-primary text-white rounded-circle me-2" style="width: 35px; height: 35px; font-weight: 600; font-size: 0.9rem;">
+                                    <div class="profile-avatar-fallback">
                                         {{ current_user.email[0].upper() }}
                                     </div>
                                 {% endif %}
-                                <span class="fw-medium">{{ current_user.email }}</span>
-                            </a>
-                            <div class="d-flex flex-column flex-lg-row gap-2 mt-3 mt-lg-0">
+                                <div class="text-start d-flex flex-column pe-1">
+                                    <span class="user-menu-name fw-semibold lh-1 text-dark" style="font-size: 0.85rem;">
+                                        {{ current_user.ngo_name if (current_user.is_ngo and current_user.ngo_name) else current_user.email.split('@')[0] }}
+                                    </span>
+                                    <span class="user-menu-role text-muted lh-1 mt-1" style="font-size: 0.7rem;">
+                                        {% if current_user.role == 'admin' %}Admin
+                                        {% elif current_user.is_ngo %}Verified NGO
+                                        {% elif current_user.badge_level and current_user.badge_level != 'None' %}{{ current_user.badge_level }} Member
+                                        {% else %}Community Member{% endif %}
+                                    </span>
+                                </div>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border py-2 mt-2" style="min-width: 220px; border-radius: 12px;">
+                                <li class="px-3 py-2 border-bottom mb-1" style="background: var(--color-neutral-light);">
+                                    <div class="small fw-bold text-dark text-truncate">{{ current_user.ngo_name if (current_user.is_ngo and current_user.ngo_name) else current_user.email.split('@')[0] }}</div>
+                                    <div class="text-muted small text-truncate" style="font-size: 0.74rem;">{{ current_user.email }}</div>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="{{ url_for('profile_routes.profile') }}">
+                                        <span>👤</span> Profile & Settings
+                                    </a>
+                                </li>
                                 {% if current_user.role == 'admin' %}
-                                    <a href="{{ url_for('admin_routes.dashboard') }}" class="btn btn-outline-primary border-2 px-3 fw-medium">Admin Dashboard</a>
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-primary" href="{{ url_for('admin_routes.dashboard') }}">
+                                        <span>⚙️</span> Admin Dashboard
+                                    </a>
+                                </li>
                                 {% endif %}
-                                <a href="{{ url_for('profile_routes.profile') }}" class="btn btn-outline-secondary border-2 px-3 fw-medium">Profile</a>
-                                <a href="{{ url_for('auth_routes.logout') }}" class="btn btn-danger px-3 fw-medium">Logout</a>
-                            </div>
-                        {% else %}
-                            <div class="d-flex flex-column flex-lg-row gap-2">
-                                <a href="{{ url_for('auth_routes.login') }}" class="btn btn-outline-primary border-2 px-4 fw-medium">Login</a>
-                                <a href="{{ url_for('auth_routes.register') }}" class="btn btn-gradient-primary px-4 fw-medium">Register</a>
-                            </div>
-                        {% endif %}
-                    </div>
+                                {% if current_user.role == 'user' %}
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="{{ url_for('resource_routes.my_resources') }}">
+                                        <span>📦</span> My Resources
+                                    </a>
+                                </li>
+                                {% endif %}
+                                <li><hr class="dropdown-divider my-1"></li>
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-danger fw-semibold" href="{{ url_for('auth_routes.logout') }}">
+                                        <span>🚪</span> Logout
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    {% else %}
+                        <div class="d-flex align-items-center gap-2">
+                            <a href="{{ url_for('auth_routes.login') }}" class="btn btn-outline-primary rounded-pill px-3 py-1 fw-semibold" style="font-size: 0.88rem;">Login</a>
+                            <a href="{{ url_for('auth_routes.register') }}" class="btn btn-primary rounded-pill px-3 py-1 fw-semibold" style="font-size: 0.88rem;">Register</a>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -143,10 +168,11 @@
                             y: 70 // Push down below navbar
                         },
                         style: {
-                            background: "{{ 'linear-gradient(to right, var(--brand-success-start), var(--brand-success-end))' if category == 'success' else 'linear-gradient(to right, #E76F51, #f4a261)' }}",
+                            background: "{{ '#2E7D32' if category == 'success' else '#D84315' }}",
                             borderRadius: "10px",
-                            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                            padding: "12px 20px"
+                            boxShadow: "0 4px 12px rgba(28, 40, 38, 0.15)",
+                            padding: "12px 20px",
+                            fontFamily: "'Plus Jakarta Sans', sans-serif"
                         }
                     }).showToast();
                 {% endfor %}

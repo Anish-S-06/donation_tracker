@@ -4,30 +4,37 @@
 {% block content %}
 <div class="row justify-content-center" data-aos="fade-up">
     <div class="col-md-8">
-        <div class="card premium-card border-0 shadow-sm mb-4">
-            <div class="card-body text-center p-5">
+        <div class="card border shadow-sm mb-4">
+            <div class="card-body text-center p-4 p-md-5">
                 {% if user.profile_photo %}
-                    <img src="{{ url_for('static', filename=user.profile_photo) }}" alt="Profile Photo" class="rounded-circle mb-3 shadow-sm border" style="width: 150px; height: 150px; object-fit: cover;">
+                    <img src="{{ url_for('static', filename=user.profile_photo) }}" alt="Profile Photo" class="rounded-circle mb-3 shadow-sm border" style="width: 140px; height: 140px; object-fit: cover;">
                 {% elif user.ngo_image %}
-                    <img src="{{ url_for('static', filename=user.ngo_image) }}" alt="NGO Photo" class="rounded-circle mb-3 shadow-sm border" style="width: 150px; height: 150px; object-fit: cover;">
+                    <img src="{{ url_for('static', filename=user.ngo_image) }}" alt="NGO Photo" class="rounded-circle mb-3 shadow-sm border" style="width: 140px; height: 140px; object-fit: cover;">
                 {% else %}
-                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center mb-3 mx-auto shadow-sm" style="width: 150px; height: 150px;">
-                        <i class="fs-1 bi bi-person"></i>
+                    <div class="bg-soft-primary text-primary rounded-circle d-flex align-items-center justify-content-center mb-3 mx-auto shadow-sm" style="width: 140px; height: 140px;">
+                        <span class="fs-1 fw-bold">{{ user.email[0].upper() }}</span>
                     </div>
                 {% endif %}
                 
                 <h3 class="fw-bold mb-1">{{ user.ngo_name if user.is_ngo and user.ngo_name else user.email.split('@')[0] }}</h3>
-                <span class="badge bg-{{ 'primary' if user.is_ngo else 'secondary' }} mb-3">
-                    {{ 'Verified NGO' if user.is_ngo else 'Community Member' }}
+                <span class="badge bg-soft-primary text-primary mb-2 px-3 py-2">
+                    {{ 'Verified NGO Partner' if user.is_ngo else 'Community Contributor' }}
                 </span>
+                {% if user.is_ngo and user.darpan_id %}
+                <div>
+                    <span class="badge bg-soft-success text-secondary border border-secondary border-opacity-25 mb-3 px-3 py-1">
+                        <i class="bi bi-patch-check-fill me-1"></i>NITI Aayog Darpan: {{ user.darpan_id }}
+                    </span>
+                </div>
+                {% endif %}
                 
-                <div class="d-flex justify-content-center gap-4 mb-4">
-                    <div class="text-center">
-                        <h4 class="fw-bold text-gradient mb-0">{{ user.trust_score }}</h4>
+                <div class="d-flex justify-content-center gap-4 my-3">
+                    <div class="text-center px-3 py-2 rounded bg-light border">
+                        <h4 class="fw-bold text-primary mb-0">{{ user.trust_score }}</h4>
                         <span class="text-muted small text-uppercase">Trust Score</span>
                     </div>
                     {% if user.badge_level != 'None' %}
-                    <div class="text-center">
+                    <div class="text-center px-3 py-2 rounded bg-light border">
                         <h4 class="fw-bold mb-0">
                             {% if user.badge_level == 'Platinum' %}💎
                             {% elif user.badge_level == 'Gold' %}🥇
@@ -38,25 +45,25 @@
                         <span class="text-muted small text-uppercase">{{ user.badge_level }}</span>
                     </div>
                     {% endif %}
-                    <div class="text-center">
+                    <div class="text-center px-3 py-2 rounded bg-light border">
                         <h4 class="fw-bold mb-0 text-warning">★ {{ "%.1f"|format(avg_rating) if avg_rating > 0 else "New" }}</h4>
-                        <span class="text-muted small text-uppercase">User Rating</span>
+                        <span class="text-muted small text-uppercase">Rating</span>
                     </div>
                 </div>
                 
                 {% if user.ngo_description %}
-                <p class="text-muted fst-italic mx-auto" style="max-width: 600px;">"{{ user.ngo_description }}"</p>
+                <p class="text-muted fst-italic mx-auto mt-3" style="max-width: 600px;">"{{ user.ngo_description }}"</p>
                 {% endif %}
             </div>
         </div>
 
         <!-- Rating Section -->
-        <div class="card premium-card border-0 shadow-sm mb-4">
+        <div class="card border shadow-sm mb-4">
             <div class="card-body p-4">
                 <h5 class="fw-bold mb-3">Community Reviews</h5>
                 
                 {% if current_user.is_authenticated and current_user.id != user.id %}
-                <div class="mb-4 p-3 bg-light rounded">
+                <div class="mb-4 p-3 bg-light rounded border">
                     <h6 class="fw-bold">{{ 'Update your rating' if my_rating else 'Rate this user' }}</h6>
                     <form action="{{ url_for('profile_routes.rate_user', user_id=user.id) }}" method="POST">
                         <div class="mb-2">
@@ -72,7 +79,7 @@
                         <div class="mb-2">
                             <textarea name="review" class="form-control form-control-sm" rows="2" placeholder="Write a short review (optional)">{{ my_rating.review if my_rating and my_rating.review else '' }}</textarea>
                         </div>
-                        <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4">Submit Rating</button>
+                        <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4 fw-semibold">Submit Rating</button>
                     </form>
                     {% if my_rating %}
                     <form action="{{ url_for('profile_routes.delete_rating', user_id=user.id) }}" method="POST" class="d-inline mt-2">
@@ -100,26 +107,26 @@
                     {% endfor %}
                     </div>
                 {% else %}
-                    <p class="text-muted mb-0">No reviews yet.</p>
+                    <p class="text-muted mb-0 small">No reviews yet.</p>
                 {% endif %}
             </div>
         </div>
 
-        <h4 class="fw-bold mb-3 text-gradient">Available Resources from this Donor</h4>
+        <h4 class="fw-bold mb-3">Available Resources from this Member</h4>
         {% if resources %}
         <div class="row g-4">
             {% for r in resources %}
             <div class="col-md-6">
-                <div class="card premium-card h-100 border-0 shadow-sm">
+                <div class="card h-100 border shadow-sm">
                     {% if r.image %}
                     <img src="{{ url_for('static', filename=r.image) }}" class="card-img-top object-fit-cover" alt="Resource Image" style="height: 180px;">
                     {% endif %}
                     <div class="card-body">
                         <h5 class="fw-bold mb-1">{{ r.title }}</h5>
                         <p class="text-muted small mb-2">{{ r.category }} • {{ r.condition }}</p>
-                        <p class="fs-7 text-muted">{{ r.description[:100] }}...</p>
+                        <p class="small text-muted">{{ r.description[:100] }}...</p>
                         <form method="POST" action="{{ url_for('request_routes.send_request', resource_id=r.id) }}">
-                            <button type="submit" class="btn btn-sm btn-outline-success w-100">Request Item</button>
+                            <button type="submit" class="btn btn-sm btn-primary w-100 fw-semibold">Request Item</button>
                         </form>
                     </div>
                 </div>
@@ -127,8 +134,8 @@
             {% endfor %}
         </div>
         {% else %}
-        <div class="alert alert-light text-center border shadow-sm">
-            This user currently has no available resources listed.
+        <div class="card border p-4 text-center shadow-sm">
+            <span class="text-muted">This user currently has no available resources listed.</span>
         </div>
         {% endif %}
     </div>

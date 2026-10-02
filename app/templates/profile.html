@@ -6,7 +6,7 @@
 
     <!-- LEFT COLUMN -->
     <div class="col-md-4 mb-4">
-        <div class="card premium-card border-0 text-center p-4">
+        <div class="card border shadow-sm text-center p-4">
             <div class="card-body">
 
                 <!-- PROFILE IMAGE -->
@@ -91,7 +91,7 @@
     <div class="col-md-8">
 
         <!-- VERIFICATION -->
-        <div class="card premium-card border-0 p-4 mb-4">
+        <div class="card border shadow-sm p-4 mb-4">
             <h5 class="fw-bold mb-4">Verification Status</h5>
 
             <div class="row text-center text-sm-start">
@@ -121,12 +121,17 @@
                     {% endif %}
                 </div>
 
-                <!-- ADMIN APPROVAL -->
+                <!-- IDENTITY APPROVAL -->
                 <div class="col-sm-4 mb-3">
-                    <h6 class="text-muted">Admin Approval</h6>
+                    <h6 class="text-muted">Identity Status</h6>
 
                         {% if current_user.verification_status == 'approved' %}
-                            <span class="badge bg-success">Verified Community Member</span>
+                            {% if current_user.id_document and 'digilocker' in current_user.id_document.lower() %}
+                                <span class="badge bg-success"><i class="bi bi-patch-check-fill me-1"></i>DigiLocker Verified</span>
+                                <div class="small text-muted mt-1">e-KYC UIDAI Authenticated</div>
+                            {% else %}
+                                <span class="badge bg-success">Verified Community Member</span>
+                            {% endif %}
 
                         {% elif current_user.verification_status == 'rejected' %}
                             <span class="badge bg-danger">Rejected</span>
@@ -147,8 +152,119 @@
             </div>
         </div>
 
+        <!-- ANTI-FLIPPING & FAIR DISTRIBUTION STATUS -->
+        {% if current_user.role == 'user' %}
+        <div class="card border shadow-sm p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="fw-bold mb-0"><i class="bi bi-shield-shaded text-primary me-2"></i>Fair Distribution & Anti-Flipping Status</h5>
+                <span class="badge bg-light text-dark border">Active Protection</span>
+            </div>
+            <p class="text-muted small mb-3">
+                To eliminate commercial resale and ensure donations reach the truly needy, high-value categories enforce cooling periods.
+            </p>
+
+            <div class="row g-3">
+                <!-- Electronics Lock -->
+                <div class="col-sm-6">
+                    <div class="p-3 rounded border {% if cooldowns.electronics %}bg-warning bg-opacity-10 border-warning{% else %}bg-light{% endif %}">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold fs-7"><i class="bi bi-laptop me-1"></i>Electronics (12-Mo Limit)</span>
+                            {% if cooldowns.electronics %}
+                                <span class="badge bg-warning text-dark"><i class="bi bi-lock-fill me-1"></i>Locked</span>
+                            {% else %}
+                                <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Eligible</span>
+                            {% endif %}
+                        </div>
+                        {% if cooldowns.electronics %}
+                            <div class="text-danger small fw-semibold mt-1">
+                                Cooldown: {{ cooldowns.electronics.days_left }} days left (until {{ cooldowns.electronics.unlock_date }})
+                            </div>
+                            <div class="text-muted" style="font-size: 0.72rem;">Item: {{ cooldowns.electronics.title }}</div>
+                        {% else %}
+                            <div class="text-muted small mt-1">You are eligible to request 1 electronic item.</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Household Lock -->
+                <div class="col-sm-6">
+                    <div class="p-3 rounded border {% if cooldowns.household %}bg-warning bg-opacity-10 border-warning{% else %}bg-light{% endif %}">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold fs-7"><i class="bi bi-house-door me-1"></i>Household (6-Mo Limit)</span>
+                            {% if cooldowns.household %}
+                                <span class="badge bg-warning text-dark"><i class="bi bi-lock-fill me-1"></i>Locked</span>
+                            {% else %}
+                                <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Eligible</span>
+                            {% endif %}
+                        </div>
+                        {% if cooldowns.household %}
+                            <div class="text-danger small fw-semibold mt-1">
+                                Cooldown: {{ cooldowns.household.days_left }} days left (until {{ cooldowns.household.unlock_date }})
+                            </div>
+                            <div class="text-muted" style="font-size: 0.72rem;">Item: {{ cooldowns.household.title }}</div>
+                        {% else %}
+                            <div class="text-muted small mt-1">You are eligible to request 1 household item.</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Active Pending Requests -->
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center p-2 px-3 rounded bg-light border">
+                        <span class="small text-muted"><i class="bi bi-hourglass-split me-1"></i>Active Pending Requests:</span>
+                        <span class="fw-bold small {% if cooldowns.active_pending_count >= 3 %}text-danger{% else %}text-primary{% endif %}">
+                            {{ cooldowns.active_pending_count }} / 3 allowed
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ECONOMIC & LOW-INCOME VERIFICATION (EWS / BPL) -->
+        <div class="card border shadow-sm p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                <h5 class="fw-bold mb-0"><i class="bi bi-file-earmark-check-fill text-success me-2"></i>Low-Income Verification (EWS / BPL)</h5>
+                {% if current_user.income_verification_status == 'approved' %}
+                    <span class="badge bg-success"><i class="bi bi-patch-check-fill me-1"></i>Admin Verified Beneficiary</span>
+                {% elif current_user.income_verification_status == 'pending' %}
+                    <span class="badge bg-warning text-dark"><i class="bi bi-clock-history me-1"></i>Under Admin Review</span>
+                {% elif current_user.income_verification_status == 'rejected' %}
+                    <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Rejected</span>
+                {% else %}
+                    <span class="badge bg-light text-dark border">Not Uploaded</span>
+                {% endif %}
+            </div>
+            
+            <p class="text-muted small mb-3">
+                High-value resources (like laptops, smartphones, and major appliances) can be restricted by donors to verified low-income individuals. Upload your government-issued Income Certificate, BPL / Ration Card, or EWS Certificate to qualify. Donors will <strong>never</strong> see your personal document; only the verified badge is confirmed by our Admin.
+            </p>
+
+            {% if current_user.income_verification_status == 'approved' %}
+                <div class="alert alert-success d-flex align-items-center py-2 px-3 mb-0" role="alert">
+                    <i class="bi bi-shield-fill-check fs-4 me-3"></i>
+                    <div>
+                        <div class="fw-bold">Your Low-Income Status is Officially Verified ✓</div>
+                        <div class="small">You are eligible to request high-value and income-restricted items.</div>
+                    </div>
+                </div>
+            {% else %}
+                <form action="{{ url_for('profile_routes.upload_income_proof') }}" method="POST" enctype="multipart/form-data" class="d-flex flex-column flex-sm-row gap-2">
+                    <input type="file" name="income_document" class="form-control" accept=".pdf,.jpg,.jpeg,.png" required>
+                    <button type="submit" class="btn btn-outline-success fw-bold text-nowrap px-4">
+                        <i class="bi bi-upload me-1"></i> {{ 'Re-upload' if current_user.income_certificate_doc else 'Submit Proof' }}
+                    </button>
+                </form>
+                {% if current_user.income_certificate_doc %}
+                <div class="mt-2 small text-muted">
+                    <i class="bi bi-paperclip me-1"></i>Submitted Document: <a href="{{ url_for('static', filename=current_user.income_certificate_doc) }}" target="_blank" class="text-decoration-none">View Submitted Proof</a>
+                </div>
+                {% endif %}
+            {% endif %}
+        </div>
+        {% endif %}
+
         <!-- GAMIFICATION -->
-        <div class="card premium-card border-0 p-4 mb-4">
+        <div class="card border shadow-sm p-4 mb-4">
             <h5 class="fw-bold mb-4">Gamification & Rewards</h5>
 
             <div class="row">
@@ -176,7 +292,7 @@
 
         <!-- MY ACTIVE LISTINGS -->
         <!-- MY ACTIVE LISTINGS -->
-        <div class="card premium-card border-0 p-4 mt-4">
+        <div class="card border shadow-sm p-4 mt-4">
             <h5 class="fw-bold mb-4">My Listed Resources</h5>
             {% if not resources %}
                 <p class="text-muted small">You haven't listed any resources yet.</p>
@@ -205,7 +321,7 @@
 
         <!-- NGO ANALYTICS & GALLERY -->
         {% if current_user.is_ngo %}
-        <div class="card premium-card border-0 p-4 mt-4">
+        <div class="card border shadow-sm p-4 mt-4">
             <h5 class="fw-bold mb-4">NGO Dashboard</h5>
             
             <h6 class="text-muted mb-3">Recent Potential Donors (UPI Clicks)</h6>

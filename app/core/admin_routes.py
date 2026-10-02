@@ -86,6 +86,39 @@ def reject_user(user_id):
 
 
 # ======================================================
+# VERIFY INCOME CERTIFICATE (LOW-INCOME / EWS STATUS)
+# ======================================================
+@admin_bp.route('/users/<int:user_id>/verify-income', methods=['POST'])
+@login_required
+@role_required('admin')
+def verify_income(user_id):
+    user = db.session.get(User, user_id)
+    if not user:
+        flash('User not found.', 'danger')
+        return redirect(url_for('admin_routes.dashboard'))
+
+    user.income_verification_status = 'approved'
+    db.session.commit()
+    flash(f"User {user.email} verified as Low-Income / EWS eligible!", 'success')
+    return redirect(url_for('admin_routes.dashboard'))
+
+
+@admin_bp.route('/users/<int:user_id>/reject-income', methods=['POST'])
+@login_required
+@role_required('admin')
+def reject_income(user_id):
+    user = db.session.get(User, user_id)
+    if not user:
+        flash('User not found.', 'danger')
+        return redirect(url_for('admin_routes.dashboard'))
+
+    user.income_verification_status = 'rejected'
+    db.session.commit()
+    flash(f"User {user.email} income proof rejected.", 'warning')
+    return redirect(url_for('admin_routes.dashboard'))
+
+
+# ======================================================
 # BAN USER
 # ======================================================
 @admin_bp.route('/users/<int:user_id>/ban', methods=['POST'])

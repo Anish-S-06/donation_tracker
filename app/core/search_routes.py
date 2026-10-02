@@ -57,7 +57,8 @@ def api_resources():
             'lng': r.location_lng,
             'distance_km': round(distance, 2) if distance is not None else None,
             'donor_id': r.donor_id,
-            'image': r.image
+            'image': r.image,
+            'requires_income_proof': bool(r.requires_income_proof)
         })
         
     return jsonify(results)

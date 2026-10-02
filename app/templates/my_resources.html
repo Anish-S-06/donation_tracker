@@ -7,35 +7,38 @@
 {% endblock %}
 
 {% block content %}
-<div class="container my-5" data-aos="fade-up">
+<div class="container my-4" data-aos="fade-up">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold text-gradient">My Resources</h2>
+        <div>
+            <h2 class="fw-bold mb-1">My Resources & Exchanges</h2>
+            <p class="text-muted small mb-0">Manage items you have shared and items you requested</p>
+        </div>
     </div>
 
     <div class="row g-4">
         <!-- Left Column: Create Resource Form -->
         <div class="col-md-5">
-            <div class="card premium-card border-0 p-3 shadow-sm sticky-top" style="top: 20px;">
+            <div class="card border p-3 shadow-sm sticky-top" style="top: 20px;">
                 <div class="card-body">
-                    <h5 class="fw-bold mb-1 text-gradient">Create Resource</h5>
-                    <p class="text-muted fs-7 mb-3">Share a new item with the community</p>
+                    <h5 class="fw-bold mb-1">List a New Resource</h5>
+                    <p class="text-muted small mb-3">Share supplies or essentials with the local community</p>
                     
                     <form id="resourceForm">
                         <input type="hidden" id="donor_id" value="{{ current_user.id }}">
                         
                         <div class="mb-3">
-                            <label class="form-label fw-medium fs-7">Title</label>
-                            <input type="text" class="form-control rounded-3 bg-light border-0 px-3 py-2" id="title" placeholder="e.g. Warm Winter Coat" required>
+                            <label class="form-label fw-medium small text-muted">Title</label>
+                            <input type="text" class="form-control" id="title" placeholder="e.g. Warm Winter Coat" required>
                         </div>
                         
                         <div class="mb-3">
-                            <label class="form-label fw-medium fs-7">Description</label>
-                            <textarea class="form-control rounded-3 bg-light border-0 px-3 py-2" id="description" rows="3" placeholder="Describe the condition and pick-up details..." required></textarea>
+                            <label class="form-label fw-medium small text-muted">Description</label>
+                            <textarea class="form-control" id="description" rows="3" placeholder="Describe the condition and pick-up details..." required></textarea>
                         </div>
                         
                         <div class="mb-3">
-                            <label class="form-label fw-medium fs-7">Category</label>
-                            <select class="form-select rounded-3 bg-light border-0 px-3 py-2" id="category">
+                            <label class="form-label fw-medium small text-muted">Category</label>
+                            <select class="form-select" id="category">
                                 <option value="Clothing">Clothing</option>
                                 <option value="Food">Food</option>
                                 <option value="Electronics">Electronics</option>
@@ -46,8 +49,8 @@
                         </div>
                         
                         <div class="mb-3">
-                            <label class="form-label fw-medium fs-7">Condition</label>
-                            <select class="form-select rounded-3 bg-light border-0 px-3 py-2" id="condition">
+                            <label class="form-label fw-medium small text-muted">Condition</label>
+                            <select class="form-select" id="condition">
                                 <option>New</option>
                                 <option>Like New</option>
                                 <option>Good</option>
@@ -56,37 +59,48 @@
                         </div>
                         
                         <div class="mb-3">
-                            <label class="form-label fw-medium fs-7">Photo (Optional)</label>
-                            <input class="form-control rounded-3 bg-light border-0 py-2" type="file" id="resourceImage" accept="image/*">
+                            <label class="form-label fw-medium small text-muted">Photo (Optional)</label>
+                            <input class="form-control" type="file" id="resourceImage" accept="image/*">
                         </div>
                         
                         <div class="mb-3">
-                            <label class="form-label fw-medium fs-7">Pickup Address (Optional)</label>
+                            <label class="form-label fw-medium small text-muted">Pickup Address (Optional)</label>
                             <div class="input-group mb-2">
-                                <input type="text" class="form-control bg-light border-0 px-3 py-2" id="address" placeholder="e.g. 123 Main St, City">
-                                <button class="btn btn-outline-secondary bg-light border-0" type="button" id="getLocationBtn" title="Use My Current Location">
+                                <input type="text" class="form-control" id="address" placeholder="e.g. 123 Main St, City">
+                                <button class="btn btn-outline-secondary" type="button" id="getLocationBtn" title="Use My Current Location">
                                     📍 GPS
                                 </button>
-                                <button class="btn btn-outline-secondary bg-light border-0" type="button" id="showMapBtn" title="Pick from Map">
+                                <button class="btn btn-outline-secondary" type="button" id="showMapBtn" title="Pick from Map">
                                     🗺️ Map
                                 </button>
                             </div>
                             <div id="mapContainer" style="display: none;" class="mb-2">
                                 <div id="pickupMap" style="height: 250px; width: 100%; border-radius: 12px; z-index: 1;"></div>
-                                <div class="form-text fs-7 mt-1 text-muted">Click anywhere on the map to automatically set the address.</div>
+                                <div class="form-text small mt-1 text-muted">Click anywhere on the map to set the address.</div>
                             </div>
                             <input type="hidden" id="location_lat">
                             <input type="hidden" id="location_lng">
-                            <div class="form-text fs-7" id="locationStatus"></div>
+                            <div class="form-text small" id="locationStatus"></div>
+                        </div>
+
+                        <!-- Low-Income Restriction Toggle -->
+                        <div class="form-check form-switch mb-3 p-3 bg-light rounded-3 border">
+                            <input class="form-check-input ms-0 me-2" type="checkbox" id="requiresIncomeProof" style="cursor: pointer;">
+                            <label class="form-check-label fw-bold small" for="requiresIncomeProof" style="cursor: pointer;">
+                                🛡️ Restrict to Verified Low-Income (EWS / BPL) Only
+                            </label>
+                            <div class="form-text text-muted" style="font-size: 0.72rem;">
+                                Recommended for appliances or essential devices. Only beneficiaries approved by verification can request this item.
+                            </div>
                         </div>
                         
-                        <button type="submit" class="btn btn-gradient-primary w-100 py-2 rounded-3 fw-semibold shadow-sm">Add Listing</button>
+                        <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">Add Listing</button>
                     </form>
                 </div>
-        </div>
+            </div>
         
-        <!-- My Active Listings -->
-        <div class="card premium-card border-0 mb-4 p-2 shadow-sm mt-4">
+            <!-- My Active Listings -->
+            <div class="card border mb-4 p-2 shadow-sm mt-4">
             <div class="card-body">
                 <h5 class="fw-bold mb-3"><i class="bi bi-card-list me-2"></i>My Active Listings</h5>
                 {% if not resources %}
@@ -115,9 +129,9 @@
         <!-- Right Column: Request Management -->
         <div class="col-md-7">
             <!-- Incoming Requests -->
-            <div class="card premium-card border-0 mb-4 p-2 shadow-sm">
-                <div class="card-body">
-                    <h5 class="fw-bold mb-3"><i class="bi bi-box-arrow-in-down me-2"></i>Incoming Requests</h5>
+            <div class="card border mb-4 p-3 shadow-sm">
+                <div class="card-body p-1">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-box-arrow-in-down me-2 text-primary"></i>Incoming Requests</h5>
                     {% if not incoming_requests %}
                         <p class="text-muted small">No one has requested your items yet.</p>
                     {% else %}
@@ -128,22 +142,29 @@
                                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                                     <div>
                                         <h6 class="mb-0 fw-bold">{{ req.resource.title }}</h6>
-                                        <small class="text-muted">Requested by: <a href="{{ url_for('profile_routes.public_profile', user_id=req.receiver.id) }}" class="text-decoration-none">{{ req.receiver.email.split('@')[0] }}</a></small>
+                                        <small class="text-muted">Requested by: <a href="{{ url_for('profile_routes.public_profile', user_id=req.receiver.id) }}" class="text-decoration-none text-primary fw-medium">{{ req.receiver.email.split('@')[0] }}</a></small>
+                                        {% if req.resource.requires_income_proof %}
+                                        <div class="mt-1">
+                                            <span class="badge bg-soft-success text-secondary border border-secondary border-opacity-25" style="font-size: 0.68rem;">
+                                                <i class="bi bi-patch-check-fill me-1"></i>Verified Low-Income Beneficiary (Admin Approved)
+                                            </span>
+                                        </div>
+                                        {% endif %}
                                     </div>
                                     <div class="d-flex gap-2">
                                         {% if req.status == 'Pending' %}
                                             {% if req.resource and req.resource.status == 'Available' %}
                                                 <form method="POST" action="{{ url_for('request_routes.accept_request', req_id=req.id) }}">
-                                                    <button class="btn btn-sm btn-success">Accept</button>
+                                                    <button class="btn btn-sm btn-secondary fw-semibold">Accept</button>
                                                 </form>
                                                 <form method="POST" action="{{ url_for('request_routes.reject_request', req_id=req.id) }}">
                                                     <button class="btn btn-sm btn-outline-danger">Reject</button>
                                                 </form>
                                             {% else %}
-                                                <span class="badge bg-secondary">Pending (Resource Unavailable)</span>
+                                                <span class="badge bg-light text-muted border">Pending (Resource Unavailable)</span>
                                             {% endif %}
                                         {% elif req.status == 'Accepted' %}
-                                            <span class="badge bg-primary align-self-center">Accepted</span>
+                                            <span class="badge bg-soft-primary text-primary align-self-center px-3 py-2">Accepted</span>
                                             {% if req.resource %}
                                                 <button class="btn btn-sm btn-outline-primary chat-btn" data-req-id="{{ req.id }}" data-title="{{ req.resource.title }}">Chat</button>
                                             {% endif %}
@@ -151,10 +172,10 @@
                                                 <button class="btn btn-sm btn-outline-warning">Unfulfill</button>
                                             </form>
                                             <form method="POST" action="{{ url_for('request_routes.fulfill_request', req_id=req.id) }}">
-                                                <button class="btn btn-sm btn-info text-white">Mark Fulfilled</button>
+                                                <button class="btn btn-sm btn-secondary fw-semibold">Mark Fulfilled</button>
                                             </form>
                                         {% elif req.status == 'Fulfilled' %}
-                                            <span class="badge bg-info align-self-center">Fulfilled</span>
+                                            <span class="badge bg-soft-success text-secondary align-self-center px-3 py-2">Fulfilled</span>
                                             {% if req.resource %}
                                                 <button class="btn btn-sm btn-outline-primary chat-btn" data-req-id="{{ req.id }}" data-title="{{ req.resource.title }}">Chat</button>
                                             {% endif %}
@@ -179,7 +200,7 @@
                                                 <!-- View Impact Modal -->
                                                 <div class="modal fade" id="viewImpactModal{{ req.history.id }}" tabindex="-1" aria-hidden="true">
                                                     <div class="modal-dialog modal-lg">
-                                                        <div class="modal-content">
+                                                        <div class="modal-content border-0 shadow-lg">
                                                             <div class="modal-header border-0 pb-0">
                                                                 <h5 class="modal-title fw-bold">Donation Impact</h5>
                                                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -223,9 +244,9 @@
             </div>
 
             <!-- Outgoing Requests -->
-            <div class="card premium-card border-0 mb-4 p-2 shadow-sm">
-                <div class="card-body">
-                    <h5 class="fw-bold mb-3"><i class="bi bi-box-arrow-up me-2"></i>My Requests for Items</h5>
+            <div class="card border mb-4 p-3 shadow-sm">
+                <div class="card-body p-1">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-box-arrow-up me-2 text-primary"></i>My Requests for Items</h5>
                     {% if not outgoing_requests %}
                         <p class="text-muted small">You haven't requested anything yet.</p>
                     {% else %}
@@ -266,12 +287,12 @@
                                             {% endif %}
                                             
                                             {% if req.history and not req.history.receipt_photo %}
-                                                <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#uploadImpactModal{{ req.history.id }}">Upload Impact</button>
+                                                <button class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#uploadImpactModal{{ req.history.id }}">Upload Impact</button>
                                                 
                                                 <!-- Upload Impact Modal -->
                                                 <div class="modal fade" id="uploadImpactModal{{ req.history.id }}" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
                                                     <div class="modal-dialog">
-                                                        <div class="modal-content">
+                                                        <div class="modal-content border-0 shadow-lg">
                                                             <div class="modal-header border-0 pb-0">
                                                                 <h5 class="modal-title fw-bold">Upload Impact Proof</h5>
                                                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -295,14 +316,14 @@
                                                                     </div>
                                                                 </div>
                                                                 <div class="modal-footer border-0">
-                                                                    <button type="submit" class="btn btn-success w-100 rounded-pill">Submit Impact</button>
+                                                                    <button type="submit" class="btn btn-secondary w-100 rounded-pill">Submit Impact</button>
                                                                 </div>
                                                             </form>
                                                         </div>
                                                     </div>
                                                 </div>
                                             {% elif req.history and req.history.receipt_photo %}
-                                                <span class="badge bg-success">Impact Uploaded ✓</span>
+                                                <span class="badge bg-soft-success text-secondary">Impact Uploaded ✓</span>
                                             {% endif %}
                                         {% endif %}
                                     </div>
@@ -322,20 +343,20 @@
 <!-- Chat Modal -->
 <div class="modal fade" id="chatModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content premium-card border-0">
+        <div class="modal-content border-0 shadow-lg">
             <div class="modal-header border-bottom border-light pb-3">
                 <h5 class="modal-title fw-bold" id="chatModalTitle">Chat</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-0">
-                <div id="chatMessages" class="p-4" style="height: 400px; overflow-y: auto; background-color: rgba(0,0,0,0.01);">
+                <div id="chatMessages" class="p-4" style="height: 400px; overflow-y: auto; background-color: var(--color-neutral-light);">
                     <!-- Messages will be loaded here -->
                 </div>
                 <div class="p-3 border-top border-light bg-light rounded-bottom">
                     <form id="chatForm" class="d-flex gap-2">
                         <input type="hidden" id="chatRequestId">
-                        <input type="text" class="form-control form-control-lg border-0 shadow-sm" id="chatInput" placeholder="Type your message..." required autocomplete="off">
-                        <button type="submit" class="btn btn-gradient-primary px-4 fw-bold shadow-sm">Send</button>
+                        <input type="text" class="form-control" id="chatInput" placeholder="Type your message..." required autocomplete="off">
+                        <button type="submit" class="btn btn-primary px-4 fw-semibold">Send</button>
                     </form>
                 </div>
             </div>
@@ -372,6 +393,8 @@
         if(lat) formData.append('location_lat', lat);
         if(lng) formData.append('location_lng', lng);
         if(address) formData.append('address', address);
+        const reqIncome = document.getElementById('requiresIncomeProof');
+        formData.append('requires_income_proof', (reqIncome && reqIncome.checked) ? 'true' : 'false');
         if(imageFile) {
             formData.append('image', imageFile);
         }

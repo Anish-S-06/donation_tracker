@@ -22,8 +22,15 @@ def profile():
     upi_clicks = []
     gallery_images = []
     
+    cooldowns = {
+        'electronics': None,
+        'household': None,
+        'active_pending_count': 0
+    }
+    
     # Fetch both given and requested items for all community members
     if current_user.role == 'user':
+        from datetime import datetime, timedelta
         resources = Resource.query.filter_by(donor_id=current_user.id).all()
         resource_ids = [r.id for r in resources]
         if resource_ids:
@@ -31,11 +38,84 @@ def profile():
             
         outgoing_requests = DonationRequest.query.filter_by(receiver_id=current_user.id).order_by(DonationRequest.created_at.desc()).all()
 
+        # Cooldown metrics
+        cooldowns['active_pending_count'] = DonationRequest.query.filter_by(
+            receiver_id=current_user.id, status='Pending'
+        ).count()
+
+        # 12-Month Electronics Check
+        one_year_ago = datetime.utcnow() - timedelta(days=365)
+        last_elec = DonationRequest.query.join(Resource).filter(
+            DonationRequest.receiver_id == current_user.id,
+            DonationRequest.status == 'Fulfilled',
+            Resource.category == 'Electronics',
+            DonationRequest.updated_at >= one_year_ago
+        ).order_by(DonationRequest.updated_at.desc()).first()
+        if last_elec:
+            days_passed = (datetime.utcnow() - last_elec.updated_at).days
+            cooldowns['electronics'] = {
+                'days_left': max(1, 365 - days_passed),
+                'unlock_date': (last_elec.updated_at + timedelta(days=365)).strftime('%d %b %Y'),
+                'title': last_elec.resource.title
+            }
+
+        # 6-Month Household Check
+        six_months_ago = datetime.utcnow() - timedelta(days=180)
+        last_house = DonationRequest.query.join(Resource).filter(
+            DonationRequest.receiver_id == current_user.id,
+            DonationRequest.status == 'Fulfilled',
+            Resource.category == 'Household',
+            DonationRequest.updated_at >= six_months_ago
+        ).order_by(DonationRequest.updated_at.desc()).first()
+        if last_house:
+            days_passed = (datetime.utcnow() - last_house.updated_at).days
+            cooldowns['household'] = {
+                'days_left': max(1, 180 - days_passed),
+                'unlock_date': (last_house.updated_at + timedelta(days=180)).strftime('%d %b %Y'),
+                'title': last_house.resource.title
+            }
+
     if current_user.is_ngo:
         upi_clicks = UPIDonationClick.query.filter_by(ngo_id=current_user.id).order_by(UPIDonationClick.timestamp.desc()).limit(50).all()
         gallery_images = NGOGalleryImage.query.filter_by(ngo_id=current_user.id).order_by(NGOGalleryImage.uploaded_at.desc()).all()
         
-    return render_template('profile.html', incoming_requests=incoming_requests, outgoing_requests=outgoing_requests, resources=resources, upi_clicks=upi_clicks, gallery_images=gallery_images)
+    return render_template('profile.html', incoming_requests=incoming_requests, outgoing_requests=outgoing_requests, resources=resources, upi_clicks=upi_clicks, gallery_images=gallery_images, cooldowns=cooldowns)
+
+@profile_bp.route('/upload-income-proof', methods=['POST'])
+@login_required
+def upload_income_proof():
+    if current_user.is_ngo:
+        flash("NGOs do not require individual income verification.", "info")
+        return redirect(url_for('profile_routes.profile'))
+
+    if 'income_document' not in request.files:
+        flash('No file selected.', 'danger')
+        return redirect(url_for('profile_routes.profile'))
+
+    file = request.files['income_document']
+    if file.filename == '':
+        flash('Please select an Income Certificate / BPL Card to upload.', 'danger')
+        return redirect(url_for('profile_routes.profile'))
+
+    allowed_exts = {'pdf', 'jpg', 'jpeg', 'png'}
+    ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+    if ext not in allowed_exts:
+        flash('Invalid file format. Allowed: PDF, JPG, PNG.', 'danger')
+        return redirect(url_for('profile_routes.profile'))
+
+    import time
+    upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'documents')
+    os.makedirs(upload_folder, exist_ok=True)
+    filename = secure_filename(f"income_user_{current_user.id}_{int(time.time())}.{ext}")
+    filepath = os.path.join(upload_folder, filename)
+    file.save(filepath)
+
+    current_user.income_certificate_doc = f"uploads/documents/{filename}"
+    current_user.income_verification_status = 'pending'
+    db.session.commit()
+
+    flash("📄 Income Certificate submitted successfully! Our Admin will review and verify your low-income eligibility status.", "success")
+    return redirect(url_for('profile_routes.profile'))
 
 @profile_bp.route('/upload-photo', methods=['POST'])
 @login_required

@@ -11,13 +11,21 @@
 {% if top_donors and top_donors|length > 0 and top_donors[0].points_balance > 0 %}
 <div class="row mb-5" data-aos="fade-down">
     <div class="col-12">
-        <div class="premium-card p-4 rounded-4 border-0 shadow-sm" style="background: linear-gradient(145deg, var(--card-bg), rgba(231, 111, 81, 0.05));">
-            <h4 class="fw-bold mb-4 text-center">🏆 Top Donors of the Month</h4>
-            <div class="d-flex flex-wrap justify-content-center gap-3">
+        <div class="card p-4 rounded-4 border shadow-sm" style="background: var(--surface-card);">
+            <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                <div>
+                    <h5 class="fw-bold mb-1 d-flex align-items-center gap-2">
+                        <span>🏆</span> Top Contributors This Month
+                    </h5>
+                    <p class="text-muted small mb-0">Recognizing neighbors making a tangible difference</p>
+                </div>
+                <span class="badge bg-soft-primary text-primary px-3 py-2 fw-semibold rounded-pill">Community Karma</span>
+            </div>
+            <div class="d-flex flex-wrap gap-3 mt-2">
                 {% for donor in top_donors %}
                 {% if donor.points_balance > 0 %}
-                <div class="d-flex align-items-center rounded-pill px-4 py-2 border shadow-sm kpi-card" style="background: var(--input-bg);">
-                    <div class="fs-3 me-2">
+                <div class="d-flex align-items-center rounded-3 px-3 py-2 border shadow-sm" style="background: var(--color-neutral-light);">
+                    <div class="fs-4 me-2">
                         {% if donor.badge_level == 'Platinum' %}💎
                         {% elif donor.badge_level == 'Gold' %}🥇
                         {% elif donor.badge_level == 'Silver' %}🥈
@@ -26,7 +34,7 @@
                     </div>
                     <div>
                         <div class="fw-bold fs-6 lh-1">{{ donor.email.split('@')[0] }}</div>
-                        <div class="text-primary fw-medium fs-7">{{ donor.points_balance }} Karma</div>
+                        <div class="text-primary fw-medium small mt-1">{{ donor.points_balance }} Karma</div>
                     </div>
                 </div>
                 {% endif %}
@@ -40,44 +48,68 @@
 <!-- Hero Section for Non-Logged In Users -->
 {% if not current_user.is_authenticated %}
 <!-- Guest Landing Page: Direct NGO Donations -->
-<div class="row mb-5 mt-4" data-aos="fade-up">
+<div class="row mb-5 mt-3" data-aos="fade-up">
     <div class="col-12">
-        <div class="hero-animated-bg p-5 text-center shadow-lg">
-            <div class="hero-content py-4">
-                <h1 class="text-huge mb-3">Empower Your Community</h1>
-                <p class="lead mx-auto mb-4" style="max-width: 700px; font-weight: 500; font-size: 1.25rem;">
-                    Support verified NGOs directly via UPI or donate essential resources to those in need. 100% transparent.
-                </p>
-                <div class="d-flex justify-content-center gap-3 mt-4">
-                    <a href="{{ url_for('auth_routes.register') }}" class="btn btn-light text-primary btn-lg rounded-pill fw-bold shadow px-5">Join the Movement</a>
+        <div class="human-hero-card p-4 p-md-5">
+            <div class="row align-items-center g-4">
+                <div class="col-lg-8">
+                    <span class="badge bg-soft-primary text-primary px-3 py-2 rounded-pill fw-semibold mb-3">Community-First Giving</span>
+                    <h1 class="display-5 fw-bold mb-3" style="color: var(--color-neutral); letter-spacing: -0.02em;">Empower your community with thoughtful, direct giving.</h1>
+                    <p class="lead text-muted mb-4" style="font-size: 1.15rem; line-height: 1.6;">
+                        Connect directly with verified local NGOs or pass along gently used resources to neighbors in need. Zero middlemen, genuine community care.
+                    </p>
+                    <div class="d-flex flex-wrap gap-3">
+                        <a href="{{ url_for('auth_routes.register') }}" class="btn btn-primary btn-lg px-4 py-2 fw-semibold">Join the Movement</a>
+                        <a href="{{ url_for('search_routes.search_page') }}" class="btn btn-outline-primary btn-lg px-4 py-2 fw-semibold">Explore Map & Items</a>
+                    </div>
+                </div>
+                <div class="col-lg-4 text-center d-none d-lg-block">
+                    <div class="p-4 rounded-4 text-start border shadow-sm" style="background: var(--surface-card);">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center bg-soft-success text-secondary" style="width: 48px; height: 48px; font-size: 1.5rem;">
+                                🌱
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-0">100% Direct Impact</h6>
+                                <small class="text-muted">Verified NGOs & Direct UPI</small>
+                            </div>
+                        </div>
+                        <p class="small text-muted mb-0">
+                            Every rupee and donated item reaches verified beneficiaries with complete transparency and local verification.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-<div class="row mb-3 mt-4">
+
+<div class="row mb-4 mt-2">
     <div class="col-12 text-center">
-        <h4 class="fw-bold text-gradient mb-1">Support Verified NGOs</h4>
-        <p class="text-muted fs-7">Donate directly via UPI to these trusted organizations.</p>
+        <h3 class="fw-bold mb-1" style="color: var(--color-neutral);">Support Verified NGOs</h3>
+        <p class="text-muted small">Contribute directly via instant UPI to verified grassroot organizations.</p>
     </div>
 </div>
 <div class="row g-4 mb-5" data-aos="fade-up" data-aos-delay="100">
     {% if ngos %}
         {% for ngo in ngos %}
         <div class="col-md-6 col-lg-4">
-            <div class="card premium-card h-100 border-0 shadow-sm p-3">
+            <div class="card h-100 border shadow-sm p-3">
                 <div class="card-body d-flex flex-column">
                     <div class="d-flex align-items-center mb-3">
                         {% if ngo.ngo_image %}
-                        <img src="{{ url_for('static', filename=ngo.ngo_image) }}" alt="NGO Profile" class="rounded-circle me-3 object-fit-cover shadow-sm border" style="width: 50px; height: 50px;">
+                        <img src="{{ url_for('static', filename=ngo.ngo_image) }}" alt="NGO Profile" class="rounded-circle me-3 object-fit-cover shadow-sm border" style="width: 52px; height: 52px;">
                         {% else %}
-                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3 border" style="width: 50px; height: 50px;">
-                            <i class="fs-4">🤝</i>
+                        <div class="bg-soft-primary text-primary rounded-circle d-flex align-items-center justify-content-center me-3 border" style="width: 52px; height: 52px;">
+                            <span class="fs-4">🤝</span>
                         </div>
                         {% endif %}
-                        <h5 class="fw-bold text-dark mb-0">{{ ngo.ngo_name or ngo.email }}</h5>
+                        <div>
+                            <h5 class="fw-bold mb-0">{{ ngo.ngo_name or ngo.email }}</h5>
+                            <span class="badge bg-soft-success text-secondary rounded-pill small mt-1">Verified Partner</span>
+                        </div>
                     </div>
-                    <p class="text-muted fs-7 mb-4 flex-grow-1">{{ ngo.ngo_description or 'Working towards a better community.' }}</p>
+                    <p class="text-muted small mb-4 flex-grow-1">{{ ngo.ngo_description or 'Dedicated to fostering community welfare and direct grassroots empowerment.' }}</p>
                     
                     {% if ngo.gallery_images %}
                     <div id="carouselNGO{{ ngo.id }}" class="carousel slide mb-3 rounded-3 overflow-hidden shadow-sm border" data-bs-ride="carousel">
@@ -101,19 +133,19 @@
                     
                     {% if ngo.upi_id %}
                         <!-- Mobile UPI deep link -->
-                        <a href="upi://pay?pa={{ ngo.upi_id }}&pn={{ ngo.ngo_name or 'NGO' }}&cu=INR" class="btn btn-gradient-primary w-100 py-2 rounded-pill fw-bold mb-3 d-md-none" onclick="trackUPIClick({{ ngo.id }})">
+                        <a href="upi://pay?pa={{ ngo.upi_id }}&pn={{ ngo.ngo_name or 'NGO' }}&cu=INR" class="btn btn-primary w-100 py-2 fw-semibold mb-3 d-md-none" onclick="trackUPIClick({{ ngo.id }})">
                             Donate via UPI App
                         </a>
                         <!-- Desktop QR Code & ID (Hidden on mobile) -->
-                        <div class="bg-white rounded-3 p-3 text-center border mt-auto d-none d-md-block shadow-sm upi-container" onclick="trackUPIClick({{ ngo.id }})" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                            <span class="fs-7 text-muted d-block mb-2 text-uppercase fw-bold">Scan to Donate</span>
+                        <div class="bg-light rounded-3 p-3 text-center border mt-auto d-none d-md-block upi-container" onclick="trackUPIClick({{ ngo.id }})" style="cursor: pointer;">
+                            <span class="small text-muted d-block mb-2 text-uppercase fw-semibold">Scan with any UPI App</span>
                             <div class="d-flex justify-content-center mb-2">
-                                <div class="upi-qr-code" data-upi="upi://pay?pa={{ ngo.upi_id }}&pn={{ ngo.ngo_name or 'NGO' }}&cu=INR"></div>
+                                <div class="upi-qr-code p-2 bg-white rounded border" data-upi="upi://pay?pa={{ ngo.upi_id }}&pn={{ ngo.ngo_name or 'NGO' }}&cu=INR"></div>
                             </div>
-                            <strong class="text-primary fs-6">{{ ngo.upi_id }}</strong>
+                            <strong class="text-primary small font-monospace">{{ ngo.upi_id }}</strong>
                         </div>
                     {% else %}
-                        <button class="btn btn-secondary w-100 py-2 rounded-pill fw-bold disabled mt-auto">UPI Not Available</button>
+                        <button class="btn btn-secondary w-100 py-2 fw-semibold disabled mt-auto">UPI Not Available</button>
                     {% endif %}
                 </div>
             </div>
@@ -122,33 +154,32 @@
     {% else %}
         <div class="col-12 text-center text-muted py-5">
             <div class="mb-3" style="font-size: 3rem;">🏢</div>
-            <h4 class="fw-bold text-dark">No NGOs Available Yet</h4>
-            <p>We are currently verifying our NGO partners. Check back soon!</p>
+            <h4 class="fw-bold">No NGOs Available Yet</h4>
+            <p>We are currently onboarding verified NGO partners. Please check back soon!</p>
         </div>
     {% endif %}
 </div>
 {% endif %}
 
-
-
 {% if not current_user.is_authenticated %}
 <!-- Sign Up CTA Section -->
-<hr class="my-5" style="opacity: 0.1;" data-aos="fade-in">
-<div class="row align-items-center mb-5 premium-card p-5 border-0 shadow-sm" data-aos="fade-up" data-aos-delay="200" style="border-radius: 24px;">
-    <div class="col-md-8 text-center text-md-start mb-4 mb-md-0">
-        <h2 class="fw-bold mb-2 text-dark">Want to donate other resources?</h2>
-        <h3 class="text-muted fw-normal mb-0">Or want to receive resources?</h3>
-    </div>
-    <div class="col-md-4 text-center text-md-end">
-        <a href="{{ url_for('auth_routes.register') }}" class="btn btn-gradient-secondary btn-lg w-100 py-3 rounded-pill fw-bold shadow">
-            Sign Up to Access
-        </a>
-        <div class="mt-3">
-            <span class="text-muted fs-7">Already have an account? <a href="{{ url_for('auth_routes.login') }}" class="text-primary fw-bold text-decoration-none">Log In</a></span>
+<hr class="my-5 border-subtle" data-aos="fade-in">
+<div class="card p-4 p-md-5 border rounded-4 shadow-sm mb-5" data-aos="fade-up" data-aos-delay="200" style="background: var(--surface-card);">
+    <div class="row align-items-center">
+        <div class="col-md-8 text-center text-md-start mb-4 mb-md-0">
+            <h3 class="fw-bold mb-2">Have items to give or need support?</h3>
+            <p class="text-muted mb-0">Join our neighbor-to-neighbor exchange network to request or list essential resources.</p>
+        </div>
+        <div class="col-md-4 text-center text-md-end">
+            <a href="{{ url_for('auth_routes.register') }}" class="btn btn-secondary btn-lg w-100 py-3 fw-semibold">
+                Get Started Today
+            </a>
+            <div class="mt-2">
+                <span class="text-muted small">Already a member? <a href="{{ url_for('auth_routes.login') }}" class="text-primary fw-semibold text-decoration-none">Log in</a></span>
+            </div>
         </div>
     </div>
 </div>
-
 {% else %}
 <!-- Logged In Dashboard View -->
 
@@ -156,30 +187,47 @@
 
     <!-- Full Width Column: Available Resources -->
     <div class="col-md-12" data-aos="fade-up" data-aos-delay="200">
-        <div class="card premium-card border-0 p-3 shadow-sm">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5 class="fw-bold mb-0 text-gradient">Recently Added Resources</h5>
-                    <a href="{{ url_for('search_routes.search_page') }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">View Map</a>
+        <div class="card border p-4 shadow-sm">
+            <div class="card-body p-0">
+                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                    <div>
+                        <h4 class="fw-bold mb-1">Community Resource Catalog</h4>
+                        <p class="text-muted small mb-0">Browse shared supplies, books, and essentials nearby</p>
+                    </div>
+                    <a href="{{ url_for('search_routes.search_page') }}" class="btn btn-outline-primary rounded-pill px-4 fw-medium">View on Map</a>
                 </div>
                 
                 {% if current_user.role == 'user' %}
-                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 p-3 bg-light rounded-4 border border-light shadow-sm">
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 p-3 rounded-3 border" style="background: var(--color-secondary-soft); border-color: var(--color-secondary-border) !important;">
                     <div>
-                        <h6 class="fw-bold mb-1 text-dark">Want to create a resource?</h6>
-                        <p class="text-muted small mb-0 mb-sm-0 mb-2">Share an item with the community and make an impact.</p>
+                        <h6 class="fw-bold mb-1 text-success">Have something to share?</h6>
+                        <p class="text-muted small mb-0">Pass along gently used items or essentials to neighbors.</p>
                     </div>
-                    <a href="{{ url_for('resource_routes.my_resources') }}" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm text-nowrap">Just click this</a>
+                    <a href="{{ url_for('resource_routes.my_resources') }}" class="btn btn-secondary px-4 fw-semibold text-nowrap mt-2 mt-sm-0">Add Resource</a>
                 </div>
                 {% endif %}
                 
+                <!-- Quick Category Navigation (Amazon-Style Departments) -->
+                <div class="category-nav-scroll mb-3">
+                    <button type="button" class="category-nav-pill active" data-category="all">All Departments</button>
+                    <button type="button" class="category-nav-pill" data-category="Clothing">Clothing & Apparel</button>
+                    <button type="button" class="category-nav-pill" data-category="Books">Books & Learning</button>
+                    <button type="button" class="category-nav-pill" data-category="Electronics">Electronics & Gadgets</button>
+                    <button type="button" class="category-nav-pill" data-category="Household">Household & Living</button>
+                    <button type="button" class="category-nav-pill" data-category="Food">Food & Nutrition</button>
+                    <button type="button" class="category-nav-pill" data-category="Other">Other Community Needs</button>
+                </div>
+
                 <div class="mb-4">
-                    <input type="text" id="dashboardSearch" class="form-control rounded-pill bg-light border-0 px-4 py-2" placeholder="Search by title, category, or description...">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search">🔍</i></span>
+                        <input type="text" id="dashboardSearch" class="form-control border-start-0 ps-0" placeholder="Search by title, department, condition, or city...">
+                    </div>
                 </div>
                 
-                <div id="resourceGrid" class="masonry-grid mt-4">
+                <div id="resourceGrid" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 mt-1">
                     {% for r in resources %}
-                    <div class="masonry-item resource-data-node"
+                    <div class="col resource-card-col resource-data-node"
                         data-title="{{ r.title }}"
                         data-desc="{{ r.description }}"
                         data-cat="{{ r.category }}"
@@ -188,53 +236,72 @@
                         data-lat="{{ r.location_lat }}"
                         data-lng="{{ r.location_lng }}"
                         data-img="{{ r.image if r.image else '' }}">
-                        <div class="resource-card position-relative shadow-sm border-0">
-                            <span class="badge category-badge-floating rounded-pill px-3 py-2">{{ r.category }}</span>
-                            
-                            <div class="img-wrapper" onclick="openResourceModal(this)" style="cursor: pointer;">
-                                {% if r.image %}
-                                <img src="{{ url_for('static', filename=r.image) }}" class="w-100 object-fit-cover" style="height: 200px;" alt="Item">
+                        <div class="amazon-product-card">
+                            <!-- Top Status Badges -->
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-soft-primary text-primary px-2 py-1" style="font-size: 0.72rem;">{{ r.category }}</span>
+                                {% if r.status == 'Available' %}
+                                    <span class="badge bg-soft-success text-secondary" style="font-size: 0.7rem;">● Available</span>
+                                {% elif r.status == 'Requested' %}
+                                    <span class="badge bg-soft-warning text-warning" style="font-size: 0.7rem;">● Requested</span>
                                 {% else %}
-                                <div class="w-100 bg-light d-flex justify-content-center align-items-center" style="height: 200px;">
-                                    <i class="fs-1 text-muted opacity-50 bi bi-box-seam"></i>
+                                    <span class="badge bg-light text-muted border" style="font-size: 0.7rem;">{{ r.status }}</span>
+                                {% endif %}
+                            </div>
+
+                            <!-- Product Image Frame (Centered, proportional, no horizontal stretching) -->
+                            <div class="amazon-product-img-box" onclick="openResourceModal(this)" title="Click to view details">
+                                {% if r.image %}
+                                <img src="{{ url_for('static', filename=r.image) }}" alt="{{ r.title }}">
+                                {% else %}
+                                <div class="text-center text-muted opacity-50 py-4">
+                                    <span style="font-size: 2.8rem;">📦</span>
                                 </div>
                                 {% endif %}
                             </div>
-                            
-                            <div class="p-3">
-                                <h5 class="fw-bold mb-1" onclick="openResourceModal(this)" style="cursor: pointer;">{{ r.title }}</h5>
-                                <p class="text-muted small mb-2">{{ r.condition }}</p>
+
+                            <!-- Product Information Details -->
+                            <div class="d-flex flex-column flex-grow-1">
+                                <h6 class="amazon-product-title" onclick="openResourceModal(this)" title="{{ r.title }}">{{ r.title }}</h6>
                                 
-                                <div class="mb-3 mt-2">
-                                    {% if r.status == 'Available' %}
-                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 py-2 px-3 w-100 text-center">{{ r.status }}</span>
-                                    {% elif r.status == 'Requested' %}
-                                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 py-2 px-3 w-100 text-center">{{ r.status }}</span>
-                                    {% else %}
-                                        <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 py-2 px-3 w-100 text-center">{{ r.status }}</span>
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <span class="badge bg-light text-dark border small" style="font-size: 0.7rem;">{{ r.condition }}</span>
+                                    {% if r.address %}
+                                    <span class="text-muted small text-truncate ms-2" style="font-size: 0.72rem; max-width: 120px;" title="{{ r.address }}">
+                                        📍 {{ r.address.split(',')[0] }}
+                                    </span>
                                     {% endif %}
                                 </div>
-                                
-                                <div class="d-flex gap-2 mt-3 pt-3 border-top border-subtle">
-                                    <a href="{{ url_for('profile_routes.public_profile', user_id=r.donor_id) }}" class="btn btn-sm btn-outline-primary flex-grow-1 rounded-pill fw-medium px-0">
-                                        <i class="bi bi-person-circle"></i> Profile
+
+                                {% if r.requires_income_proof %}
+                                <div class="mb-2">
+                                    <span class="badge bg-warning bg-opacity-10 text-dark border border-warning" style="font-size: 0.65rem;">
+                                        <i class="bi bi-shield-lock-fill text-warning me-1"></i>Low-Income (EWS/BPL)
+                                    </span>
+                                </div>
+                                {% endif %}
+
+                                <!-- Action Buttons -->
+                                <div class="d-flex gap-2 mt-auto pt-3 border-top border-subtle">
+                                    <a href="{{ url_for('profile_routes.public_profile', user_id=r.donor_id) }}" class="btn btn-sm btn-outline-secondary flex-grow-1 py-1" style="font-size: 0.8rem;">
+                                        Profile
                                     </a>
                                     {% if not current_user.is_ngo and current_user.role != 'admin' and r.status == 'Available' and r.donor_id != current_user.id %}
                                     <form method="POST" action="{{ url_for('request_routes.send_request', resource_id=r.id) }}" class="m-0 flex-grow-1">
-                                        <button type="submit" class="btn btn-sm btn-gradient-primary w-100 rounded-pill fw-bold shadow-sm px-0">Request</button>
+                                        <button type="submit" class="btn btn-sm btn-primary w-100 py-1 fw-semibold" style="font-size: 0.8rem;">Request</button>
                                     </form>
                                     {% elif r.donor_id == current_user.id %}
-                                    <button class="btn btn-sm btn-outline-secondary flex-grow-1 rounded-pill disabled px-0">Yours</button>
+                                    <button class="btn btn-sm btn-light border flex-grow-1 py-1 disabled text-muted" style="font-size: 0.8rem;">Yours</button>
                                     {% endif %}
                                 </div>
                             </div>
                         </div>
                     </div>
                     {% else %}
-                    <div class="w-100 text-center text-muted py-5 mt-4" style="grid-column: 1 / -1;">
+                    <div class="col-12 text-center text-muted py-5 mt-3">
                         <div class="mb-3" style="font-size: 3rem;">📭</div>
-                        <h4 class="fw-bold text-dark mb-2">No resources found</h4>
-                        <p class="fs-6 mb-0">Be the first to list an item on the platform!</p>
+                        <h5 class="fw-bold mb-1">No resources found</h5>
+                        <p class="small text-muted mb-0">Be the first to list an item in the community!</p>
                     </div>
                     {% endfor %}
                 </div>
@@ -259,11 +326,11 @@
             <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25" id="modalCat"></span>
             <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25" id="modalCond"></span>
         </div>
-        <p class="text-dark mb-4 fs-6" id="modalDesc" style="white-space: pre-wrap;"></p>
+        <p class="mb-4 fs-6" id="modalDesc" style="white-space: pre-wrap;"></p>
         
         <div class="bg-light rounded-3 p-3 border">
             <div class="fs-7 text-muted fw-bold text-uppercase mb-1">📍 Pick-up Address</div>
-            <div class="text-dark fw-medium" id="modalAddr"></div>
+            <div class="fw-medium" id="modalAddr"></div>
         </div>
       </div>
       <div class="modal-footer border-top-0 pt-0 mb-2">
@@ -288,7 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
             text: upiString,
             width: 120,
             height: 120,
-            colorDark : "#2A9D8F",
+            colorDark : "#1C2826",
             colorLight : "#ffffff",
             correctLevel : QRCode.CorrectLevel.M
         });
@@ -311,39 +378,57 @@ async function trackUPIClick(ngoId) {
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('dashboardSearch');
-    if (searchInput) {
-        searchInput.addEventListener('keyup', function() {
-            const filter = this.value.toLowerCase();
-            const rows = document.querySelectorAll('.masonry-item');
-            let hasVisible = false;
-            
-            rows.forEach(row => {
-                const text = row.innerText.toLowerCase();
-                if (text.includes(filter)) {
-                    row.style.display = '';
-                    hasVisible = true;
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-            
-            let emptyMsg = document.getElementById('noResultsRow');
-            if (!hasVisible && filter.trim() !== '') {
-                if (!emptyMsg) {
-                    const grid = document.getElementById('resourceGrid');
-                    emptyMsg = document.createElement('div');
-                    emptyMsg.id = 'noResultsRow';
-                    emptyMsg.style.gridColumn = '1 / -1';
-                    emptyMsg.className = 'w-100 text-center text-muted py-5 mt-4';
-                    emptyMsg.innerHTML = '<h5 class="fw-bold text-dark">No matching resources found.</h5>';
-                    grid.appendChild(emptyMsg);
-                }
-                emptyMsg.style.display = 'block';
-            } else if (emptyMsg) {
-                emptyMsg.style.display = 'none';
+    const categoryPills = document.querySelectorAll('.category-nav-pill');
+    let activeCategory = 'all';
+
+    function filterResources() {
+        const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        const cards = document.querySelectorAll('.resource-card-col');
+        let hasVisible = false;
+
+        cards.forEach(card => {
+            const cardCat = (card.getAttribute('data-cat') || '').toLowerCase();
+            const text = card.innerText.toLowerCase();
+
+            const matchesCategory = (activeCategory === 'all') || cardCat.includes(activeCategory.toLowerCase());
+            const matchesQuery = !query || text.includes(query);
+
+            if (matchesCategory && matchesQuery) {
+                card.style.display = '';
+                hasVisible = true;
+            } else {
+                card.style.display = 'none';
             }
         });
+
+        let emptyMsg = document.getElementById('noResultsRow');
+        if (!hasVisible && (query !== '' || activeCategory !== 'all')) {
+            if (!emptyMsg) {
+                const grid = document.getElementById('resourceGrid');
+                emptyMsg = document.createElement('div');
+                emptyMsg.id = 'noResultsRow';
+                emptyMsg.className = 'col-12 text-center text-muted py-5 mt-4';
+                emptyMsg.innerHTML = '<h5 class="fw-bold text-dark">No matching resources found.</h5><p class="text-muted small">Try searching with different keywords or choosing another department.</p>';
+                grid.appendChild(emptyMsg);
+            }
+            emptyMsg.style.display = 'block';
+        } else if (emptyMsg) {
+            emptyMsg.style.display = 'none';
+        }
     }
+
+    if (searchInput) {
+        searchInput.addEventListener('input', filterResources);
+    }
+
+    categoryPills.forEach(pill => {
+        pill.addEventListener('click', function() {
+            categoryPills.forEach(p => p.classList.remove('active'));
+            this.classList.add('active');
+            activeCategory = this.getAttribute('data-category');
+            filterResources();
+        });
+    });
 });
 
 function openResourceModal(element) {

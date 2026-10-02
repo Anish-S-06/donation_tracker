@@ -113,43 +113,89 @@ def register():
             flash("Email already exists", "danger")
             return redirect(url_for('auth_routes.register'))
             
-        # Handle ID Document Upload
-        if 'id_document' not in request.files:
-            flash("ID Document is required", "danger")
-            return redirect(url_for('auth_routes.register'))
-            
-        file = request.files['id_document']
-        if file.filename == '':
-            flash("No selected file for ID Document", "danger")
-            return redirect(url_for('auth_routes.register'))
-            
-        allowed_doc_exts = {'pdf', 'jpg', 'jpeg', 'png'}
-        ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
-        if ext not in allowed_doc_exts:
-            flash("Invalid file type. Allowed: PDF, JPG, PNG.", "danger")
-            return redirect(url_for('auth_routes.register'))
-            
         upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'documents')
         os.makedirs(upload_folder, exist_ok=True)
-        
-        # We don't have a user ID yet, so use timestamp and secure filename
-        filename = secure_filename(f"temp_{int(time.time())}_{file.filename}")
-        filepath = os.path.join(upload_folder, filename)
-        file.save(filepath)
-        
-        temp_doc_path = f"uploads/documents/{filename}"
+        allowed_doc_exts = {'pdf', 'jpg', 'jpeg', 'png'}
 
-        # Store registration data temporarily
-        session['pending_user'] = {
-            'email': email,
-            'password': password,
-            'role': role,
-            'phone_number': phone_number,
-            'ngo_name': request.form.get('ngo_name'),
-            'ngo_description': request.form.get('ngo_description'),
-            'upi_id': request.form.get('upi_id'),
-            'id_document': temp_doc_path
-        }
+        def save_uploaded_doc(file_obj, prefix):
+            if not file_obj or file_obj.filename == '':
+                return None
+            ext = file_obj.filename.rsplit('.', 1)[-1].lower() if '.' in file_obj.filename else ''
+            if ext not in allowed_doc_exts:
+                return False
+            import uuid
+            filename = secure_filename(f"{prefix}_{int(time.time())}_{uuid.uuid4().hex[:6]}.{ext}")
+            filepath = os.path.join(upload_folder, filename)
+            file_obj.save(filepath)
+            return f"uploads/documents/{filename}"
+
+        if role == 'ngo':
+            darpan_id = request.form.get('darpan_id', '').strip().upper()
+            org_pan = request.form.get('org_pan', '').strip().upper()
+            ngo_name = request.form.get('ngo_name', '').strip()
+            upi_id = request.form.get('upi_id', '').strip()
+            ngo_desc = request.form.get('ngo_description', '').strip()
+
+            if not darpan_id or not org_pan or not ngo_name or not upi_id:
+                flash("All NGO fields (Name, Darpan ID, PAN, UPI ID) are required.", "danger")
+                return redirect(url_for('auth_routes.register'))
+
+            reg_file = request.files.get('ngo_reg_document') or request.files.get('id_document')
+            pan_file = request.files.get('pan_card_doc')
+            auth_file = request.files.get('auth_letter_doc')
+
+            if not reg_file or reg_file.filename == '':
+                flash("NGO Registration Certificate / Trust Deed is required.", "danger")
+                return redirect(url_for('auth_routes.register'))
+            if not pan_file or pan_file.filename == '':
+                flash("Organization PAN Card copy is required.", "danger")
+                return redirect(url_for('auth_routes.register'))
+            if not auth_file or auth_file.filename == '':
+                flash("Representative ID & Authorization Letter is required.", "danger")
+                return redirect(url_for('auth_routes.register'))
+
+            reg_doc_path = save_uploaded_doc(reg_file, 'ngo_reg')
+            pan_doc_path = save_uploaded_doc(pan_file, 'ngo_pan')
+            auth_doc_path = save_uploaded_doc(auth_file, 'ngo_auth')
+
+            if not reg_doc_path or not pan_doc_path or not auth_doc_path:
+                flash("Invalid file format. Allowed: PDF, JPG, PNG.", "danger")
+                return redirect(url_for('auth_routes.register'))
+
+            session['pending_user'] = {
+                'email': email,
+                'password': password,
+                'role': role,
+                'phone_number': phone_number,
+                'ngo_name': ngo_name,
+                'ngo_description': ngo_desc,
+                'upi_id': upi_id,
+                'darpan_id': darpan_id,
+                'org_pan': org_pan,
+                'id_document': reg_doc_path,
+                'pan_card_doc': pan_doc_path,
+                'auth_letter_doc': auth_doc_path
+            }
+        else:
+            # Handle Community Member DigiLocker e-KYC Verification (No file upload needed)
+            digilocker_verified = request.form.get('digilocker_verified') == '1'
+            if not digilocker_verified:
+                flash("DigiLocker verification is required to verify your identity.", "warning")
+                return redirect(url_for('auth_routes.register'))
+
+            doc_type = request.form.get('digilocker_doc_type', 'Aadhaar')
+            doc_id = request.form.get('digilocker_doc_id', 'XXXX-XXXX-4819')
+            dl_name = request.form.get('digilocker_name', '').strip()
+
+            session['pending_user'] = {
+                'email': email,
+                'password': password,
+                'role': role,
+                'phone_number': phone_number,
+                'id_document': f"DigiLocker Verified ({doc_type} {doc_id})",
+                'digilocker_verified': True,
+                'verification_status': 'approved'
+            }
 
         otp = generate_otp()
 
@@ -203,19 +249,26 @@ def verify_email_otp():
                 actual_role = 'receiver'
                 is_ngo = True
 
+            is_dl_verified = pending_user.get('digilocker_verified', False)
+            ver_status = 'approved' if is_dl_verified else 'pending'
+
             new_user = User(
                 email=pending_user['email'],
                 role=actual_role,
                 phone_number=pending_user['phone_number'],
                 is_email_verified=True,
                 is_phone_verified=False,
-                verification_status='pending',
+                verification_status=ver_status,
                 is_banned=False,
                 is_ngo=is_ngo,
                 ngo_name=pending_user.get('ngo_name'),
                 ngo_description=pending_user.get('ngo_description'),
                 upi_id=pending_user.get('upi_id'),
-                id_document=pending_user.get('id_document')
+                darpan_id=pending_user.get('darpan_id'),
+                org_pan=pending_user.get('org_pan'),
+                id_document=pending_user.get('id_document') or ('DigiLocker Verified' if is_dl_verified else None),
+                pan_card_doc=pending_user.get('pan_card_doc'),
+                auth_letter_doc=pending_user.get('auth_letter_doc')
             )
 
             new_user.set_password(pending_user['password'])
@@ -226,7 +279,10 @@ def verify_email_otp():
             otp_store.pop(email, None)
             session.pop('pending_user', None)
 
-            flash("Email verified successfully!", "success")
+            if is_dl_verified:
+                flash("Email verified! Your identity was automatically approved via DigiLocker.", "success")
+            else:
+                flash("Email verified successfully!", "success")
             return redirect(url_for('auth_routes.login'))
 
         flash("Invalid OTP", "danger")

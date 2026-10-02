@@ -8,52 +8,52 @@
 
 <div class="row mb-4 align-items-center">
     <div class="col-md-8">
-        <h2 class="fw-bold text-gradient mb-1">Admin Control Center</h2>
-        <p class="text-muted">Manage user verifications, account bans, and platform analytics statistics.</p>
+        <h2 class="fw-bold mb-1">Admin Operations Center</h2>
+        <p class="text-muted small mb-0">Platform overview, identity verifications, user moderation, and listings control</p>
     </div>
 </div>
 
 <!-- KPI Metrics -->
-<div class="row mb-5">
-    <div class="col-md-3 col-sm-6 mb-4">
-        <div class="card kpi-card border-0 shadow-sm p-3 bg-white text-dark">
-            <div class="card-body">
-                <span class="text-muted text-uppercase fs-7">Total Users</span>
-                <h3 class="fw-bold text-primary">{{ kpis.total_users }}</h3>
+<div class="row mb-4 g-3">
+    <div class="col-md-3 col-sm-6">
+        <div class="card border shadow-sm p-3">
+            <div class="card-body p-2">
+                <span class="text-muted text-uppercase small fw-semibold">Total Community Members</span>
+                <h3 class="fw-bold text-primary mt-1 mb-0">{{ kpis.total_users }}</h3>
             </div>
         </div>
     </div>
 
-    <div class="col-md-3 col-sm-6 mb-4">
-        <div class="card kpi-card border-0 shadow-sm p-3 bg-white text-dark">
-            <div class="card-body">
-                <span class="text-muted text-uppercase fs-7">Resources</span>
-                <h3 class="fw-bold text-success">{{ kpis.total_resources }}</h3>
+    <div class="col-md-3 col-sm-6">
+        <div class="card border shadow-sm p-3">
+            <div class="card-body p-2">
+                <span class="text-muted text-uppercase small fw-semibold">Resources Listed</span>
+                <h3 class="fw-bold text-secondary mt-1 mb-0">{{ kpis.total_resources }}</h3>
             </div>
         </div>
     </div>
 
-    <div class="col-md-3 col-sm-6 mb-4">
-        <div class="card kpi-card border-0 shadow-sm p-3 bg-white text-dark">
-            <div class="card-body">
-                <span class="text-muted text-uppercase fs-7">Pending Requests</span>
-                <h3 class="fw-bold text-warning">{{ kpis.pending_requests }}</h3>
+    <div class="col-md-3 col-sm-6">
+        <div class="card border shadow-sm p-3">
+            <div class="card-body p-2">
+                <span class="text-muted text-uppercase small fw-semibold">Pending Requests</span>
+                <h3 class="fw-bold text-warning mt-1 mb-0">{{ kpis.pending_requests }}</h3>
             </div>
         </div>
     </div>
 
-    <div class="col-md-3 col-sm-6 mb-4">
-        <div class="card kpi-card border-0 shadow-sm p-3 bg-white text-dark">
-            <div class="card-body">
-                <span class="text-muted text-uppercase fs-7">Fulfilled</span>
-                <h3 class="fw-bold text-info">{{ kpis.fulfilled_donations }}</h3>
+    <div class="col-md-3 col-sm-6">
+        <div class="card border shadow-sm p-3">
+            <div class="card-body p-2">
+                <span class="text-muted text-uppercase small fw-semibold">Fulfilled Exchanges</span>
+                <h3 class="fw-bold text-success mt-1 mb-0">{{ kpis.fulfilled_donations }}</h3>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Tabs -->
-<div class="card premium-card border-0 p-4">
+<div class="card border shadow-sm p-4">
     <div class="card-body">
 
         <ul class="nav nav-pills mb-4">
@@ -98,20 +98,96 @@
                         <tr>
                             <td>{{ u.id }}</td>
 
-                            <td>{{ u.email }}</td>
-
                             <td>
-                                <span class="badge bg-secondary">{{ u.role }}</span>
+                                <div class="fw-bold">{{ u.email }}</div>
+                                {% if u.is_ngo %}
+                                    <div class="text-primary small fw-semibold"><i class="bi bi-building me-1"></i>{{ u.ngo_name or 'NGO Entity' }}</div>
+                                    {% if u.darpan_id %}
+                                    <div class="text-muted mt-1" style="font-size: 0.72rem;">
+                                        <span class="badge bg-light text-dark border">Darpan: {{ u.darpan_id }}</span>
+                                        <a href="https://ngodarpan.gov.in" target="_blank" class="text-primary ms-1" title="Verify on NGO Darpan"><i class="bi bi-box-arrow-up-right"></i></a>
+                                        {% if u.org_pan %}<span class="badge bg-light text-dark border ms-1">PAN: {{ u.org_pan }}</span>{% endif %}
+                                    </div>
+                                    {% endif %}
+                                {% endif %}
                             </td>
 
-                            <!-- ID DOCUMENT -->
                             <td>
-                                {% if u.id_document %}
-                                    <a href="{{ url_for('static', filename=u.id_document) }}" target="_blank" class="btn btn-sm btn-outline-info">
-                                        <i class="bi bi-file-earmark-pdf"></i> View Doc
-                                    </a>
+                                {% if u.is_ngo %}
+                                    <span class="badge bg-primary"><i class="bi bi-shield-check me-1"></i>NGO</span>
+                                {% elif u.role == 'admin' %}
+                                    <span class="badge bg-dark">Admin</span>
                                 {% else %}
-                                    <span class="text-muted small">None</span>
+                                    <span class="badge bg-secondary">Community</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- ID DOCUMENT / NGO DOCUMENTS -->
+                            <td>
+                                {% if u.is_ngo %}
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bi bi-folder2-open me-1"></i> NGO Documents
+                                        </button>
+                                        <ul class="dropdown-menu shadow-sm">
+                                            {% if u.id_document %}
+                                            <li>
+                                                <a class="dropdown-item small py-2" href="{{ url_for('static', filename=u.id_document) }}" target="_blank">
+                                                    <i class="bi bi-file-earmark-check text-success me-2"></i>1. Registration / Deed
+                                                </a>
+                                            </li>
+                                            {% endif %}
+                                            {% if u.pan_card_doc %}
+                                            <li>
+                                                <a class="dropdown-item small py-2" href="{{ url_for('static', filename=u.pan_card_doc) }}" target="_blank">
+                                                    <i class="bi bi-credit-card-2-front text-primary me-2"></i>2. Organization PAN
+                                                </a>
+                                            </li>
+                                            {% endif %}
+                                            {% if u.auth_letter_doc %}
+                                            <li>
+                                                <a class="dropdown-item small py-2" href="{{ url_for('static', filename=u.auth_letter_doc) }}" target="_blank">
+                                                    <i class="bi bi-file-earmark-person text-warning me-2"></i>3. Signatory & Auth Letter
+                                                </a>
+                                            </li>
+                                            {% endif %}
+                                            {% if not u.id_document and not u.pan_card_doc and not u.auth_letter_doc %}
+                                            <li><span class="dropdown-item text-muted small">No documents</span></li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                {% else %}
+                                    {% if u.id_document %}
+                                        {% if 'digilocker' in u.id_document.lower() %}
+                                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 py-1 px-2">
+                                                <i class="bi bi-patch-check-fill text-success me-1"></i>DigiLocker Verified
+                                            </span>
+                                            <div class="text-muted mt-1" style="font-size: 0.68rem;">{{ u.id_document }}</div>
+                                        {% else %}
+                                            <a href="{{ url_for('static', filename=u.id_document) }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                                <i class="bi bi-file-earmark-pdf"></i> View ID
+                                            </a>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted small">None</span>
+                                    {% endif %}
+
+                                    {% if u.income_certificate_doc %}
+                                        <div class="mt-2">
+                                            <a href="{{ url_for('static', filename=u.income_certificate_doc) }}" target="_blank" class="btn btn-sm btn-outline-success" style="font-size: 0.72rem;">
+                                                <i class="bi bi-cash-coin me-1"></i> Income Proof
+                                            </a>
+                                            <div class="mt-1">
+                                                {% if u.income_verification_status == 'approved' %}
+                                                    <span class="badge bg-success" style="font-size: 0.65rem;">Income Verified</span>
+                                                {% elif u.income_verification_status == 'rejected' %}
+                                                    <span class="badge bg-danger" style="font-size: 0.65rem;">Income Rejected</span>
+                                                {% else %}
+                                                    <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">Income Pending</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% endif %}
                                 {% endif %}
                             </td>
 
@@ -150,13 +226,25 @@
                                           and u.verification_status == 'pending' %}
 
                                         <form method="POST" action="{{ url_for('admin_routes.verify_user', user_id=u.id) }}">
-                                            <button class="btn btn-success btn-sm">Verify</button>
+                                            <button class="btn btn-success btn-sm">Verify ID</button>
                                         </form>
 
                                         <form method="POST" action="{{ url_for('admin_routes.reject_user', user_id=u.id) }}">
-                                            <button class="btn btn-warning btn-sm">Reject</button>
+                                            <button class="btn btn-warning btn-sm">Reject ID</button>
                                         </form>
 
+                                    {% endif %}
+
+                                    <!-- VERIFY / REJECT INCOME PROOF -->
+                                    {% if not u.is_ngo and u.income_certificate_doc and u.income_verification_status == 'pending' %}
+                                        <div class="d-flex gap-1 border-start ps-2">
+                                            <form method="POST" action="{{ url_for('admin_routes.verify_income', user_id=u.id) }}">
+                                                <button class="btn btn-sm btn-outline-success" title="Approve Low-Income Status" style="font-size: 0.72rem;">Verify Income</button>
+                                            </form>
+                                            <form method="POST" action="{{ url_for('admin_routes.reject_income', user_id=u.id) }}">
+                                                <button class="btn btn-sm btn-outline-warning" title="Reject Income Proof" style="font-size: 0.72rem;">Reject Income</button>
+                                            </form>
+                                        </div>
                                     {% endif %}
 
                                     <!-- BAN / UNBAN -->
@@ -227,14 +315,14 @@
                             <tr>
                                 <td>{{ r.id }}</td>
                                 <td>{{ r.title }}</td>
-                                <td><span class="badge bg-info text-dark">{{ r.category }}</span></td>
+                                <td><span class="badge bg-soft-primary text-primary">{{ r.category }}</span></td>
                                 <td>
                                     {% if r.status == 'Available' %}
-                                        <span class="badge bg-success">Available</span>
+                                        <span class="badge bg-soft-success text-secondary">Available</span>
                                     {% elif r.status == 'Requested' %}
-                                        <span class="badge bg-warning text-dark">Requested</span>
+                                        <span class="badge bg-soft-warning text-warning">Requested</span>
                                     {% else %}
-                                        <span class="badge bg-secondary">{{ r.status }}</span>
+                                        <span class="badge bg-light text-muted border">{{ r.status }}</span>
                                     {% endif %}
                                 </td>
                                 <td>{{ r.donor_id }}</td>
@@ -266,13 +354,16 @@ document.addEventListener("DOMContentLoaded", function() {
 
         const res = await fetch("{{ url_for('admin_routes.analytics_data') }}");
         const data = await res.json();
+        
+        const palette = ['#D84315', '#2E7D32', '#FF7043', '#FFB74D', '#1C2826', '#81C784', '#B0BEC5'];
 
         new Chart(document.getElementById('usersChart'), {
             type: 'doughnut',
             data: {
                 labels: data.users.labels,
                 datasets: [{
-                    data: data.users.data
+                    data: data.users.data,
+                    backgroundColor: palette
                 }]
             }
         });
@@ -282,7 +373,8 @@ document.addEventListener("DOMContentLoaded", function() {
             data: {
                 labels: data.resources.labels,
                 datasets: [{
-                    data: data.resources.data
+                    data: data.resources.data,
+                    backgroundColor: '#D84315'
                 }]
             }
         });
@@ -292,15 +384,17 @@ document.addEventListener("DOMContentLoaded", function() {
             data: {
                 labels: data.categories.labels,
                 datasets: [{
-                    data: data.categories.data
+                    data: data.categories.data,
+                    backgroundColor: palette
                 }]
             }
         });
     }
 
-    document.querySelector('#analytics-tab')
-        .addEventListener('shown.bs.tab', loadAnalyticsData, { once: true });
-
+    const analyticsTabBtn = document.querySelector('button[data-bs-target="#analytics-panel"]');
+    if (analyticsTabBtn) {
+        analyticsTabBtn.addEventListener('shown.bs.tab', loadAnalyticsData, { once: true });
+    }
 });
 </script>
 

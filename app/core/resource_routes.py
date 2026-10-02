@@ -86,6 +86,8 @@ def create_resource():
                 db.session.rollback()
                 return jsonify({'error': str(e)}), 500
 
+    requires_income = data.get('requires_income_proof') in [True, 'true', '1', 1]
+
     new_resource = Resource(
         donor_id=donor.id,
         title=data.get('title'),
@@ -95,7 +97,8 @@ def create_resource():
         address=data.get('address'),
         location_lat=data.get('location_lat'),
         location_lng=data.get('location_lng'),
-        image=image_path
+        image=image_path,
+        requires_income_proof=requires_income
     )
 
     db.session.add(new_resource)
