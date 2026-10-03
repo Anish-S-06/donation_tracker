@@ -377,6 +377,8 @@ def login():
         login_user(user, remember=remember)
 
         flash("Login successful!", "success")
+        if user.role == 'admin':
+            return redirect(url_for('admin_routes.dashboard'))
         return redirect(url_for('frontend_routes.index'))
 
     return render_template('login.html')

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>New Message on Seva Sankalp</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #333333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 30px auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        .header {
+            background-color: #D84315;
+            padding: 30px 20px;
+            text-align: center;
+            color: white;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+        }
+        .content {
+            padding: 35px 30px;
+            line-height: 1.6;
+        }
+        .content p {
+            margin-bottom: 18px;
+        }
+        .message-box {
+            background-color: #fff3e0;
+            border-left: 4px solid #D84315;
+            padding: 16px 20px;
+            border-radius: 8px;
+            font-style: italic;
+            margin: 20px 0;
+            color: #4e342e;
+        }
+        .highlight {
+            font-weight: bold;
+            color: #D84315;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #D84315;
+            color: white !important;
+            text-decoration: none;
+            padding: 12px 28px;
+            border-radius: 50px;
+            font-weight: 600;
+            margin-top: 15px;
+            text-align: center;
+        }
+        .footer {
+            background-color: #f1f3f5;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💬 New Message Received</h1>
+        </div>
+        <div class="content">
+            <p>Hello <strong>{{ recipient_name }}</strong>,</p>
+            <p>You have a new message from <span class="highlight">{{ sender_name }}</span> regarding the handover for <strong>{{ resource_title }}</strong>:</p>
+            
+            <div class="message-box">
+                "{{ message_preview }}"
+            </div>
+            
+            <p>Please click below to view the full conversation and reply:</p>
+            
+            <div style="text-align: center;">
+                <a href="{{ chat_url }}" class="btn">Open Handover Chat</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>This is an automated notification from Seva Sankalp.</p>
+            <p>Together, building stronger communities through sharing.</p>
+        </div>
+    </div>
+</body>
+</html>

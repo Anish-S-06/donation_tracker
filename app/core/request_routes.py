@@ -2,7 +2,12 @@ from flask import Blueprint, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from app import db
 from app.models import Resource, Request as DonationRequest, DonationHistory, User, PointsTransaction
-from app.services.email_service import send_request_notification, send_request_confirmation
+from app.services.email_service import (
+    send_request_notification,
+    send_request_confirmation,
+    send_chat_notification,
+    send_request_accepted_notification
+)
 
 request_bp = Blueprint('request_routes', __name__, url_prefix='/request')
 
@@ -162,6 +167,19 @@ def accept_request(req_id):
     # They stay pending so they can be accepted later if this transaction fails.
             
     db.session.commit()
+
+    try:
+        chat_url = url_for('profile_routes.profile', _external=True)
+        send_request_accepted_notification(
+            receiver_email=req.receiver.email,
+            receiver_name=req.receiver.email.split('@')[0],
+            donor_name=current_user.email.split('@')[0],
+            resource_title=req.resource.title,
+            chat_url=chat_url
+        )
+    except Exception as e:
+        print(f"Accepted email dispatch error: {e}")
+
     flash("Request accepted. Please arrange exchange.", "success")
     return redirect(url_for('profile_routes.profile'))
 
@@ -344,5 +362,20 @@ def send_message(req_id):
     )
     db.session.add(new_msg)
     db.session.commit()
+    
+    try:
+        recipient = req.resource.donor if current_user.id == req.receiver_id else req.receiver
+        if recipient and recipient.email:
+            chat_url = url_for('profile_routes.profile', _external=True)
+            send_chat_notification(
+                recipient_email=recipient.email,
+                recipient_name=recipient.email.split('@')[0],
+                sender_name=current_user.email.split('@')[0],
+                resource_title=req.resource.title,
+                message_preview=data['content'],
+                chat_url=chat_url
+            )
+    except Exception as e:
+        print(f"Chat email dispatch error: {e}")
     
     return jsonify({'message': 'Sent', 'id': new_msg.id}), 201

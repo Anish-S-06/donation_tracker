@@ -16,6 +16,9 @@ def allowed_file(filename):
 @profile_bp.route('/')
 @login_required
 def profile():
+    if current_user.role == 'admin':
+        return redirect(url_for('admin_routes.dashboard'))
+
     incoming_requests = []
     outgoing_requests = []
     resources = []

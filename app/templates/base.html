@@ -47,7 +47,14 @@
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'frontend_routes.index' %}active{% endif %}" href="{{ url_for('frontend_routes.index') }}">Home</a>
                     </li>
-                    {% if current_user.is_authenticated %}
+                    {% if current_user.is_authenticated and current_user.role == 'admin' %}
+                    <li class="nav-item">
+                        <a class="nav-link text-primary fw-bold {% if request.endpoint == 'admin_routes.dashboard' %}active{% endif %}" href="{{ url_for('admin_routes.dashboard') }}">
+                            <i class="bi bi-shield-lock-fill me-1"></i>Admin Dashboard
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if current_user.is_authenticated and current_user.role != 'admin' %}
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'frontend_routes.support_ngos' %}active{% endif %}" href="{{ url_for('frontend_routes.support_ngos') }}">Support NGOs</a>
                     </li>
@@ -96,15 +103,16 @@
                                     <div class="small fw-bold text-dark text-truncate">{{ current_user.ngo_name if (current_user.is_ngo and current_user.ngo_name) else current_user.email.split('@')[0] }}</div>
                                     <div class="text-muted small text-truncate" style="font-size: 0.74rem;">{{ current_user.email }}</div>
                                 </li>
+                                {% if current_user.role == 'admin' %}
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-primary fw-bold" href="{{ url_for('admin_routes.dashboard') }}">
+                                        <span>⚙️</span> Admin Dashboard
+                                    </a>
+                                </li>
+                                {% else %}
                                 <li>
                                     <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="{{ url_for('profile_routes.profile') }}">
                                         <span>👤</span> Profile & Settings
-                                    </a>
-                                </li>
-                                {% if current_user.role == 'admin' %}
-                                <li>
-                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-primary" href="{{ url_for('admin_routes.dashboard') }}">
-                                        <span>⚙️</span> Admin Dashboard
                                     </a>
                                 </li>
                                 {% endif %}

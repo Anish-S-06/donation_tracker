@@ -10,13 +10,14 @@ admin_bp = Blueprint('admin_routes', __name__, url_prefix='/admin')
 # ======================================================
 # ADMIN DASHBOARD
 # ======================================================
+@admin_bp.route('/')
 @admin_bp.route('/dashboard')
 @login_required
 @role_required('admin')
 def dashboard():
 
     users = User.query.filter_by(is_email_verified=True).all()
-    resources = Resource.query.all()
+    resources = Resource.query.order_by(Resource.created_at.desc()).all()
 
     kpis = {
         'total_users': User.query.count(),
@@ -26,6 +27,30 @@ def dashboard():
     }
 
     return render_template('admin_dashboard.html', users=users, resources=resources, kpis=kpis)
+
+
+# ======================================================
+# DELETE RESOURCE (ADMIN ACTION)
+# ======================================================
+@admin_bp.route('/resources/<int:resource_id>/delete', methods=['POST'])
+@login_required
+@role_required('admin')
+def delete_resource_admin(resource_id):
+    resource = db.session.get(Resource, resource_id)
+    if not resource:
+        flash('Resource not found.', 'danger')
+        return redirect(url_for('admin_routes.dashboard'))
+        
+    from app.models import Request as DonationRequest, DonationHistory, Message
+    reqs = DonationRequest.query.filter_by(resource_id=resource_id).all()
+    for req in reqs:
+        DonationHistory.query.filter_by(request_id=req.id).delete()
+        Message.query.filter_by(request_id=req.id).delete()
+    DonationRequest.query.filter_by(resource_id=resource_id).delete()
+    db.session.delete(resource)
+    db.session.commit()
+    flash(f"Listing '{resource.title}' (ID #{resource.id}) deleted successfully.", 'success')
+    return redirect(url_for('admin_routes.dashboard'))
 
 
 # ======================================================

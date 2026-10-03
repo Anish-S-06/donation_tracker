@@ -2,339 +2,299 @@
 {% block title %}Admin Dashboard - Seva Sankalp{% endblock %}
 
 {% block extra_css %}
+<style>
+    .kpi-card {
+        background-color: var(--surface-card) !important;
+        border: 1px solid var(--border-subtle) !important;
+        border-radius: 14px !important;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .kpi-card:hover {
+        border-color: var(--color-primary) !important;
+        box-shadow: var(--shadow-medium) !important;
+        transform: translateY(-2px);
+    }
+    .premium-card {
+        background-color: var(--surface-card) !important;
+        border: 1px solid var(--border-subtle) !important;
+        border-radius: 16px !important;
+    }
+    .text-gradient {
+        background: linear-gradient(135deg, var(--color-primary), #FF7043);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .nav-pills .nav-link {
+        color: var(--text-secondary);
+        border-radius: 10px;
+        transition: all 0.2s ease;
+    }
+    .nav-pills .nav-link.active {
+        background-color: var(--color-primary) !important;
+        color: #ffffff !important;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(216, 67, 21, 0.25);
+    }
+</style>
 {% endblock %}
 
 {% block content %}
 
+<!-- Header -->
 <div class="row mb-4 align-items-center">
     <div class="col-md-8">
-        <h2 class="fw-bold mb-1">Admin Operations Center</h2>
-        <p class="text-muted small mb-0">Platform overview, identity verifications, user moderation, and listings control</p>
+        <h2 class="fw-bold text-gradient mb-1">Admin Control Center</h2>
+        <p class="text-muted mb-0">Platform overview, user moderation, account bans, listings control, and analytics statistics.</p>
     </div>
 </div>
 
 <!-- KPI Metrics -->
 <div class="row mb-4 g-3">
     <div class="col-md-3 col-sm-6">
-        <div class="card border shadow-sm p-3">
+        <div class="card kpi-card shadow-sm p-3">
             <div class="card-body p-2">
-                <span class="text-muted text-uppercase small fw-semibold">Total Community Members</span>
+                <span class="text-muted text-uppercase small fw-bold">Total Community Users</span>
                 <h3 class="fw-bold text-primary mt-1 mb-0">{{ kpis.total_users }}</h3>
             </div>
         </div>
     </div>
 
     <div class="col-md-3 col-sm-6">
-        <div class="card border shadow-sm p-3">
+        <div class="card kpi-card shadow-sm p-3">
             <div class="card-body p-2">
-                <span class="text-muted text-uppercase small fw-semibold">Resources Listed</span>
-                <h3 class="fw-bold text-secondary mt-1 mb-0">{{ kpis.total_resources }}</h3>
+                <span class="text-muted text-uppercase small fw-bold">Resources Listed</span>
+                <h3 class="fw-bold text-success mt-1 mb-0">{{ kpis.total_resources }}</h3>
             </div>
         </div>
     </div>
 
     <div class="col-md-3 col-sm-6">
-        <div class="card border shadow-sm p-3">
+        <div class="card kpi-card shadow-sm p-3">
             <div class="card-body p-2">
-                <span class="text-muted text-uppercase small fw-semibold">Pending Requests</span>
+                <span class="text-muted text-uppercase small fw-bold">Pending Requests</span>
                 <h3 class="fw-bold text-warning mt-1 mb-0">{{ kpis.pending_requests }}</h3>
             </div>
         </div>
     </div>
 
     <div class="col-md-3 col-sm-6">
-        <div class="card border shadow-sm p-3">
+        <div class="card kpi-card shadow-sm p-3">
             <div class="card-body p-2">
-                <span class="text-muted text-uppercase small fw-semibold">Fulfilled Exchanges</span>
-                <h3 class="fw-bold text-success mt-1 mb-0">{{ kpis.fulfilled_donations }}</h3>
+                <span class="text-muted text-uppercase small fw-bold">Fulfilled Exchanges</span>
+                <h3 class="fw-bold text-info mt-1 mb-0">{{ kpis.fulfilled_donations }}</h3>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Tabs -->
-<div class="card border shadow-sm p-4">
-    <div class="card-body">
+<!-- Tabs & Management Section -->
+<div class="card premium-card shadow-sm p-4">
+    <div class="card-body p-0">
 
-        <ul class="nav nav-pills mb-4">
+        <ul class="nav nav-pills mb-4" id="adminTabs" role="tablist">
             <li class="nav-item">
-                <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#users-panel">
-                    User Management
+                <button class="nav-link active px-4 py-2" id="users-tab" data-bs-toggle="pill" data-bs-target="#users-panel" type="button">
+                    <i class="bi bi-people me-1"></i> User Management
                 </button>
             </li>
             <li class="nav-item ms-2">
-                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#analytics-panel">
-                    Analytics
+                <button class="nav-link px-4 py-2" id="resources-tab" data-bs-toggle="pill" data-bs-target="#resources-panel" type="button">
+                    <i class="bi bi-box-seam me-1"></i> Manage Listings
                 </button>
             </li>
             <li class="nav-item ms-2">
-                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#resources-panel">
-                    Manage Listings
+                <button class="nav-link px-4 py-2" id="analytics-tab" data-bs-toggle="pill" data-bs-target="#analytics-panel" type="button">
+                    <i class="bi bi-bar-chart-line me-1"></i> Analytics
                 </button>
             </li>
         </ul>
 
-        <div class="tab-content">
+        <div class="tab-content" id="adminTabContent">
 
-            <!-- USERS PANEL -->
+            <!-- 1. USERS PANEL -->
             <div class="tab-pane fade show active" id="users-panel">
-
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle">
+                    <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>ID</th>
-                                <th>Email</th>
+                                <th style="width: 60px;">ID</th>
+                                <th>Email / Entity</th>
                                 <th>Role</th>
-                                <th>ID Document</th>
-                                <th>Status</th>
-                                <th>Ban</th>
-                                <th class="text-end">Actions</th>
-                            </tr>
-                        </thead>
-
-                    <tbody>
-                    {% for u in users %}
-                        <tr>
-                            <td>{{ u.id }}</td>
-
-                            <td>
-                                <div class="fw-bold">{{ u.email }}</div>
-                                {% if u.is_ngo %}
-                                    <div class="text-primary small fw-semibold"><i class="bi bi-building me-1"></i>{{ u.ngo_name or 'NGO Entity' }}</div>
-                                    {% if u.darpan_id %}
-                                    <div class="text-muted mt-1" style="font-size: 0.72rem;">
-                                        <span class="badge bg-light text-dark border">Darpan: {{ u.darpan_id }}</span>
-                                        <a href="https://ngodarpan.gov.in" target="_blank" class="text-primary ms-1" title="Verify on NGO Darpan"><i class="bi bi-box-arrow-up-right"></i></a>
-                                        {% if u.org_pan %}<span class="badge bg-light text-dark border ms-1">PAN: {{ u.org_pan }}</span>{% endif %}
-                                    </div>
-                                    {% endif %}
-                                {% endif %}
-                            </td>
-
-                            <td>
-                                {% if u.is_ngo %}
-                                    <span class="badge bg-primary"><i class="bi bi-shield-check me-1"></i>NGO</span>
-                                {% elif u.role == 'admin' %}
-                                    <span class="badge bg-dark">Admin</span>
-                                {% else %}
-                                    <span class="badge bg-secondary">Community</span>
-                                {% endif %}
-                            </td>
-
-                            <!-- ID DOCUMENT / NGO DOCUMENTS -->
-                            <td>
-                                {% if u.is_ngo %}
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="bi bi-folder2-open me-1"></i> NGO Documents
-                                        </button>
-                                        <ul class="dropdown-menu shadow-sm">
-                                            {% if u.id_document %}
-                                            <li>
-                                                <a class="dropdown-item small py-2" href="{{ url_for('static', filename=u.id_document) }}" target="_blank">
-                                                    <i class="bi bi-file-earmark-check text-success me-2"></i>1. Registration / Deed
-                                                </a>
-                                            </li>
-                                            {% endif %}
-                                            {% if u.pan_card_doc %}
-                                            <li>
-                                                <a class="dropdown-item small py-2" href="{{ url_for('static', filename=u.pan_card_doc) }}" target="_blank">
-                                                    <i class="bi bi-credit-card-2-front text-primary me-2"></i>2. Organization PAN
-                                                </a>
-                                            </li>
-                                            {% endif %}
-                                            {% if u.auth_letter_doc %}
-                                            <li>
-                                                <a class="dropdown-item small py-2" href="{{ url_for('static', filename=u.auth_letter_doc) }}" target="_blank">
-                                                    <i class="bi bi-file-earmark-person text-warning me-2"></i>3. Signatory & Auth Letter
-                                                </a>
-                                            </li>
-                                            {% endif %}
-                                            {% if not u.id_document and not u.pan_card_doc and not u.auth_letter_doc %}
-                                            <li><span class="dropdown-item text-muted small">No documents</span></li>
-                                            {% endif %}
-                                        </ul>
-                                    </div>
-                                {% else %}
-                                    {% if u.id_document %}
-                                        {% if 'digilocker' in u.id_document.lower() %}
-                                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 py-1 px-2">
-                                                <i class="bi bi-patch-check-fill text-success me-1"></i>DigiLocker Verified
-                                            </span>
-                                            <div class="text-muted mt-1" style="font-size: 0.68rem;">{{ u.id_document }}</div>
-                                        {% else %}
-                                            <a href="{{ url_for('static', filename=u.id_document) }}" target="_blank" class="btn btn-sm btn-outline-secondary">
-                                                <i class="bi bi-file-earmark-pdf"></i> View ID
-                                            </a>
-                                        {% endif %}
-                                    {% else %}
-                                        <span class="text-muted small">None</span>
-                                    {% endif %}
-
-                                    {% if u.income_certificate_doc %}
-                                        <div class="mt-2">
-                                            <a href="{{ url_for('static', filename=u.income_certificate_doc) }}" target="_blank" class="btn btn-sm btn-outline-success" style="font-size: 0.72rem;">
-                                                <i class="bi bi-cash-coin me-1"></i> Income Proof
-                                            </a>
-                                            <div class="mt-1">
-                                                {% if u.income_verification_status == 'approved' %}
-                                                    <span class="badge bg-success" style="font-size: 0.65rem;">Income Verified</span>
-                                                {% elif u.income_verification_status == 'rejected' %}
-                                                    <span class="badge bg-danger" style="font-size: 0.65rem;">Income Rejected</span>
-                                                {% else %}
-                                                    <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">Income Pending</span>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                    {% endif %}
-                                {% endif %}
-                            </td>
-
-                            <!-- CLEAN STATUS -->
-                            <td>
-                                {% if u.verification_status == 'approved' %}
-                                    <span class="badge bg-success">Verified</span>
-                                {% elif u.verification_status == 'rejected' %}
-                                    <span class="badge bg-danger">Rejected</span>
-                                {% elif u.id_document %}
-                                    <span class="badge bg-warning">Pending Admin</span>
-                                {% elif u.is_email_verified == False %}
-                                    <span class="badge bg-secondary">Email Not Verified</span>
-                                {% else %}
-                                    <span class="badge bg-light text-dark border">No ID Submitted</span>
-                                {% endif %}
-                            </td>
-
-                            <!-- BAN STATUS -->
-                            <td>
-                                {% if u.is_banned %}
-                                    <span class="badge bg-danger">Banned</span>
-                                {% else %}
-                                    <span class="badge bg-success">Active</span>
-                                {% endif %}
-                            </td>
-
-                            <!-- ACTIONS -->
-                            <td class="text-end">
-
-                                <div class="d-flex gap-2">
-
-                                    <!-- VERIFY / REJECT -->
-                                    {% if u.role != 'admin'
-                                          and u.is_email_verified == True
-                                          and u.verification_status == 'pending' %}
-
-                                        <form method="POST" action="{{ url_for('admin_routes.verify_user', user_id=u.id) }}">
-                                            <button class="btn btn-success btn-sm">Verify ID</button>
-                                        </form>
-
-                                        <form method="POST" action="{{ url_for('admin_routes.reject_user', user_id=u.id) }}">
-                                            <button class="btn btn-warning btn-sm">Reject ID</button>
-                                        </form>
-
-                                    {% endif %}
-
-                                    <!-- VERIFY / REJECT INCOME PROOF -->
-                                    {% if not u.is_ngo and u.income_certificate_doc and u.income_verification_status == 'pending' %}
-                                        <div class="d-flex gap-1 border-start ps-2">
-                                            <form method="POST" action="{{ url_for('admin_routes.verify_income', user_id=u.id) }}">
-                                                <button class="btn btn-sm btn-outline-success" title="Approve Low-Income Status" style="font-size: 0.72rem;">Verify Income</button>
-                                            </form>
-                                            <form method="POST" action="{{ url_for('admin_routes.reject_income', user_id=u.id) }}">
-                                                <button class="btn btn-sm btn-outline-warning" title="Reject Income Proof" style="font-size: 0.72rem;">Reject Income</button>
-                                            </form>
-                                        </div>
-                                    {% endif %}
-
-                                    <!-- BAN / UNBAN -->
-                                    {% if u.role != 'admin' and u.id != current_user.id %}
-
-                                        {% if u.is_banned %}
-                                            <form method="POST" action="{{ url_for('admin_routes.unban_user', user_id=u.id) }}">
-                                                <button class="btn btn-success btn-sm">Unban</button>
-                                            </form>
-                                        {% else %}
-                                            <form method="POST" action="{{ url_for('admin_routes.ban_user', user_id=u.id) }}">
-                                                <button class="btn btn-danger btn-sm">Ban</button>
-                                            </form>
-                                        {% endif %}
-
-                                    {% else %}
-                                        <span class="text-muted">Your Account</span>
-                                    {% endif %}
-
-                                </div>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-                </div>
-
-            </div>
-
-            <!-- ANALYTICS PANEL -->
-            <div class="tab-pane fade" id="analytics-panel">
-                <div class="row">
-
-                    <div class="col-md-4">
-                        <h6 class="text-center">Users</h6>
-                        <canvas id="usersChart"></canvas>
-                    </div>
-
-                    <div class="col-md-4">
-                        <h6 class="text-center">Resources</h6>
-                        <canvas id="resourcesChart"></canvas>
-                    </div>
-
-                    <div class="col-md-4">
-                        <h6 class="text-center">Categories</h6>
-                        <canvas id="categoriesChart"></canvas>
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- RESOURCES PANEL -->
-            <div class="tab-pane fade" id="resources-panel">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>ID</th>
-                                <th>Title</th>
-                                <th>Category</th>
-                                <th>Status</th>
-                                <th>Donor ID</th>
-                                <th class="text-end">Actions</th>
+                                <th>Verification Status</th>
+                                <th>Account Status</th>
+                                <th class="text-end" style="min-width: 140px;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                        {% for r in resources %}
+                        {% for u in users %}
                             <tr>
-                                <td>{{ r.id }}</td>
-                                <td>{{ r.title }}</td>
-                                <td><span class="badge bg-soft-primary text-primary">{{ r.category }}</span></td>
+                                <td class="fw-semibold text-muted">{{ u.id }}</td>
+
                                 <td>
-                                    {% if r.status == 'Available' %}
-                                        <span class="badge bg-soft-success text-secondary">Available</span>
-                                    {% elif r.status == 'Requested' %}
-                                        <span class="badge bg-soft-warning text-warning">Requested</span>
-                                    {% else %}
-                                        <span class="badge bg-light text-muted border">{{ r.status }}</span>
+                                    <div class="fw-bold text-dark">{{ u.email }}</div>
+                                    {% if u.is_ngo %}
+                                        <div class="text-primary small fw-semibold">
+                                            <i class="bi bi-building me-1"></i>{{ u.ngo_name or 'Registered NGO' }}
+                                        </div>
+                                        {% if u.darpan_id %}
+                                        <div class="text-muted mt-1" style="font-size: 0.72rem;">
+                                            <span class="badge bg-light text-dark border">Darpan: {{ u.darpan_id }}</span>
+                                            {% if u.org_pan %}<span class="badge bg-light text-dark border ms-1">PAN: {{ u.org_pan }}</span>{% endif %}
+                                        </div>
+                                        {% endif %}
+                                    {% endif %}
+                                    {% if u.income_certificate_doc %}
+                                        <div class="mt-1">
+                                            <a href="{{ url_for('static', filename=u.income_certificate_doc) }}" target="_blank" class="text-decoration-none text-muted" style="font-size: 0.72rem;">
+                                                <i class="bi bi-file-earmark-pdf me-1 text-danger"></i>Income Certificate
+                                            </a>
+                                        </div>
                                     {% endif %}
                                 </td>
-                                <td>{{ r.donor_id }}</td>
+
+                                <td>
+                                    {% if u.is_ngo %}
+                                        <span class="badge bg-primary"><i class="bi bi-shield-check me-1"></i>NGO</span>
+                                    {% elif u.role == 'admin' %}
+                                        <span class="badge bg-dark">Admin</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Community</span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- AUTOMATIC DIGILOCKER VERIFICATION STATUS (NO MANUAL VERIFY BUTTON NEEDED) -->
+                                <td>
+                                    {% if u.role == 'admin' %}
+                                        <span class="badge bg-dark">System Admin</span>
+                                    {% elif u.is_banned %}
+                                        <span class="badge bg-danger">Banned</span>
+                                    {% elif u.verification_status == 'approved' %}
+                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 py-1 px-2">
+                                            <i class="bi bi-patch-check-fill text-success me-1"></i>Verified (DigiLocker)
+                                        </span>
+                                    {% elif u.is_email_verified == False %}
+                                        <span class="badge bg-secondary">Email Not Verified</span>
+                                    {% else %}
+                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 py-1 px-2">
+                                            <i class="bi bi-check-circle me-1"></i>Verified
+                                        </span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- BAN STATUS -->
+                                <td>
+                                    {% if u.is_banned %}
+                                        <span class="badge bg-danger">Banned</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- ACTIONS: BAN / UNBAN -->
                                 <td class="text-end">
-                                    <button class="btn btn-sm btn-outline-danger admin-delete-resource-btn" data-id="{{ r.id }}" title="Delete Listing">
-                                        <i class="bi bi-trash"></i> Delete
-                                    </button>
+                                    {% if u.role != 'admin' and u.id != current_user.id %}
+                                        {% if u.is_banned %}
+                                            <form method="POST" action="{{ url_for('admin_routes.unban_user', user_id=u.id) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to unban user {{ u.email }}?');">
+                                                <button type="submit" class="btn btn-sm btn-success px-3">
+                                                    <i class="bi bi-unlock me-1"></i> Unban
+                                                </button>
+                                            </form>
+                                        {% else %}
+                                            <form method="POST" action="{{ url_for('admin_routes.ban_user', user_id=u.id) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to ban user {{ u.email }}? This will restrict login and platform access.');">
+                                                <button type="submit" class="btn btn-sm btn-danger px-3">
+                                                    <i class="bi bi-slash-circle me-1"></i> Ban Account
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge bg-light text-muted border">System Admin</span>
+                                    {% endif %}
                                 </td>
                             </tr>
                         {% endfor %}
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- 2. MANAGE LISTINGS PANEL (DELETE RESOURCES) -->
+            <div class="tab-pane fade" id="resources-panel">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 60px;">ID</th>
+                                <th>Title</th>
+                                <th>Category</th>
+                                <th>Status</th>
+                                <th>Donor ID</th>
+                                <th class="text-end" style="min-width: 120px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for r in resources %}
+                            <tr id="resource-row-{{ r.id }}">
+                                <td class="fw-semibold text-muted">{{ r.id }}</td>
+                                <td>
+                                    <div class="fw-bold text-dark">{{ r.title }}</div>
+                                    <small class="text-muted text-truncate d-inline-block" style="max-width: 300px;">{{ r.description }}</small>
+                                </td>
+                                <td><span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">{{ r.category }}</span></td>
+                                <td>
+                                    {% if r.status == 'Available' %}
+                                        <span class="badge bg-success">Available</span>
+                                    {% elif r.status == 'Requested' %}
+                                        <span class="badge bg-warning text-dark">Requested</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ r.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border">User #{{ r.donor_id }}</span>
+                                </td>
+                                <td class="text-end">
+                                    <form method="POST" action="{{ url_for('admin_routes.delete_resource_admin', resource_id=r.id) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete listing \'{{ r.title }}\'? This action is permanent and will cancel any active requests.');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger px-3" title="Delete Listing">
+                                            <i class="bi bi-trash me-1"></i> Delete
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 3. ANALYTICS PANEL -->
+            <div class="tab-pane fade" id="analytics-panel">
+                <div class="row g-4 pt-2">
+                    <div class="col-md-4">
+                        <div class="card border p-3 text-center h-100 shadow-none">
+                            <h6 class="fw-bold text-muted text-uppercase small mb-3">User Distribution</h6>
+                            <div style="position: relative; height: 260px;">
+                                <canvas id="usersChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card border p-3 text-center h-100 shadow-none">
+                            <h6 class="fw-bold text-muted text-uppercase small mb-3">Resource Status</h6>
+                            <div style="position: relative; height: 260px;">
+                                <canvas id="resourcesChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card border p-3 text-center h-100 shadow-none">
+                            <h6 class="fw-bold text-muted text-uppercase small mb-3">Item Categories</h6>
+                            <div style="position: relative; height: 260px;">
+                                <canvas id="categoriesChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -350,45 +310,67 @@
 <script>
 document.addEventListener("DOMContentLoaded", function() {
 
+    let chartsLoaded = false;
+
     async function loadAnalyticsData() {
+        if (chartsLoaded) return;
+        chartsLoaded = true;
 
-        const res = await fetch("{{ url_for('admin_routes.analytics_data') }}");
-        const data = await res.json();
-        
-        const palette = ['#D84315', '#2E7D32', '#FF7043', '#FFB74D', '#1C2826', '#81C784', '#B0BEC5'];
+        try {
+            const res = await fetch("{{ url_for('admin_routes.analytics_data') }}");
+            const data = await res.json();
+            
+            const palette = ['#D84315', '#2E7D32', '#FF7043', '#FFB74D', '#1C2826', '#81C784', '#B0BEC5'];
 
-        new Chart(document.getElementById('usersChart'), {
-            type: 'doughnut',
-            data: {
-                labels: data.users.labels,
-                datasets: [{
-                    data: data.users.data,
-                    backgroundColor: palette
-                }]
-            }
-        });
+            new Chart(document.getElementById('usersChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: data.users.labels,
+                    datasets: [{
+                        data: data.users.data,
+                        backgroundColor: palette
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
 
-        new Chart(document.getElementById('resourcesChart'), {
-            type: 'bar',
-            data: {
-                labels: data.resources.labels,
-                datasets: [{
-                    data: data.resources.data,
-                    backgroundColor: '#D84315'
-                }]
-            }
-        });
+            new Chart(document.getElementById('resourcesChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.resources.labels,
+                    datasets: [{
+                        label: 'Count',
+                        data: data.resources.data,
+                        backgroundColor: '#D84315'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
 
-        new Chart(document.getElementById('categoriesChart'), {
-            type: 'pie',
-            data: {
-                labels: data.categories.labels,
-                datasets: [{
-                    data: data.categories.data,
-                    backgroundColor: palette
-                }]
-            }
-        });
+            new Chart(document.getElementById('categoriesChart'), {
+                type: 'pie',
+                data: {
+                    labels: data.categories.labels,
+                    datasets: [{
+                        data: data.categories.data,
+                        backgroundColor: palette
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        } catch (e) {
+            console.error("Failed to load analytics data:", e);
+        }
     }
 
     const analyticsTabBtn = document.querySelector('button[data-bs-target="#analytics-panel"]');
@@ -397,5 +379,4 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 </script>
-
 {% endblock %}

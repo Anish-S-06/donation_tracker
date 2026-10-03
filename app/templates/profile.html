@@ -375,7 +375,209 @@
         </div>
         {% endif %}
 
-        <!-- REQUEST MANAGEMENT HAS BEEN MOVED TO MY RESOURCES PAGE -->
+        <!-- INCOMING REQUESTS -->
+        <div class="card border shadow-sm p-4 mt-4">
+            <h5 class="fw-bold mb-4"><i class="bi bi-box-arrow-in-down me-2 text-primary"></i>Incoming Requests</h5>
+            {% if not incoming_requests %}
+                <p class="text-muted small">No one has requested your items yet.</p>
+            {% else %}
+                <div style="max-height: 450px; overflow-y: auto; overflow-x: hidden;" class="pe-1">
+                <ul class="list-group list-group-flush">
+                {% for req in incoming_requests %}
+                    <li class="list-group-item bg-transparent border-bottom border-light px-0 py-3">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <h6 class="mb-0 fw-bold">{{ req.resource.title if req.resource else 'Deleted Resource' }}</h6>
+                                <small class="text-muted">Requested by: <a href="{{ url_for('profile_routes.public_profile', user_id=req.receiver.id) }}" class="text-decoration-none text-primary fw-medium">{{ req.receiver.email.split('@')[0] }}</a></small>
+                                {% if req.resource and req.resource.requires_income_proof %}
+                                <div class="mt-1">
+                                    <span class="badge bg-soft-success text-success border border-success border-opacity-25" style="font-size: 0.68rem;">
+                                        <i class="bi bi-patch-check-fill me-1"></i>Verified Low-Income Beneficiary (Admin Approved)
+                                    </span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="d-flex gap-2">
+                                {% if req.status == 'Pending' %}
+                                    {% if req.resource and req.resource.status == 'Available' %}
+                                        <form method="POST" action="{{ url_for('request_routes.accept_request', req_id=req.id) }}">
+                                            <button class="btn btn-sm btn-success fw-semibold">Accept</button>
+                                        </form>
+                                        <form method="POST" action="{{ url_for('request_routes.reject_request', req_id=req.id) }}">
+                                            <button class="btn btn-sm btn-outline-danger">Reject</button>
+                                        </form>
+                                    {% else %}
+                                        <span class="badge bg-light text-muted border">Pending (Resource Unavailable)</span>
+                                    {% endif %}
+                                {% elif req.status == 'Accepted' %}
+                                    <span class="badge bg-primary text-white align-self-center px-3 py-2">Accepted</span>
+                                    {% if req.resource %}
+                                        <button class="btn btn-sm btn-outline-primary chat-btn" data-req-id="{{ req.id }}" data-title="{{ req.resource.title }}">Chat</button>
+                                    {% endif %}
+                                    <form method="POST" action="{{ url_for('request_routes.unfulfill_request', req_id=req.id) }}">
+                                        <button class="btn btn-sm btn-outline-warning">Unfulfill</button>
+                                    </form>
+                                    <form method="POST" action="{{ url_for('request_routes.fulfill_request', req_id=req.id) }}">
+                                        <button class="btn btn-sm btn-success fw-semibold">Mark Fulfilled</button>
+                                    </form>
+                                {% elif req.status == 'Fulfilled' %}
+                                    <span class="badge bg-success text-white align-self-center px-3 py-2">Fulfilled</span>
+                                    {% if req.resource %}
+                                        <button class="btn btn-sm btn-outline-primary chat-btn" data-req-id="{{ req.id }}" data-title="{{ req.resource.title }}">Chat</button>
+                                    {% endif %}
+                                    {% if req.history and not req.history.receiver_rating %}
+                                        <form method="POST" action="{{ url_for('request_routes.rate_exchange', history_id=req.history.id) }}" class="d-flex align-items-center gap-2">
+                                            <select name="rating" class="form-select form-select-sm" style="width: auto;" required>
+                                                <option value="" disabled selected>Rate</option>
+                                                <option value="5">5 ★</option>
+                                                <option value="4">4 ★</option>
+                                                <option value="3">3 ★</option>
+                                                <option value="2">2 ★</option>
+                                                <option value="1">1 ★</option>
+                                            </select>
+                                            <button class="btn btn-sm btn-warning">Rate</button>
+                                        </form>
+                                    {% elif req.history and req.history.receiver_rating %}
+                                        <span class="text-warning small fw-bold">Rated: {{ req.history.receiver_rating }} ★</span>
+                                    {% endif %}
+                                    {% if req.history and req.history.receipt_photo %}
+                                        <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#viewImpactModal{{ req.history.id }}">View Impact</button>
+                                        
+                                        <!-- View Impact Modal -->
+                                        <div class="modal fade" id="viewImpactModal{{ req.history.id }}" tabindex="-1" aria-hidden="true">
+                                            <div class="modal-dialog modal-lg">
+                                                <div class="modal-content border-0 shadow-lg">
+                                                    <div class="modal-header border-0 pb-0">
+                                                        <h5 class="modal-title fw-bold">Donation Impact</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body text-start">
+                                                        <div class="row g-3">
+                                                            <div class="col-md-6">
+                                                                <p class="mb-2 fw-bold text-muted">Receipt Proof</p>
+                                                                <img src="{{ url_for('static', filename=req.history.receipt_photo) }}" class="img-fluid rounded border shadow-sm">
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <p class="mb-2 fw-bold text-muted">Usage/Impact</p>
+                                                                {% if req.history.usage_photo %}
+                                                                    <img src="{{ url_for('static', filename=req.history.usage_photo) }}" class="img-fluid rounded border shadow-sm">
+                                                                {% else %}
+                                                                    <div class="p-4 bg-light text-muted text-center rounded border">No usage photo provided.</div>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                        {% if req.history.impact_message %}
+                                                        <div class="mt-4 p-3 bg-light rounded border-start border-4 border-success">
+                                                            <p class="fst-italic mb-0">"{{ req.history.impact_message }}"</p>
+                                                        </div>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ req.status }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </li>
+                {% endfor %}
+                </ul>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- OUTGOING REQUESTS -->
+        <div class="card border shadow-sm p-4 mt-4">
+            <h5 class="fw-bold mb-4"><i class="bi bi-box-arrow-up me-2 text-primary"></i>My Requests for Items</h5>
+            {% if not outgoing_requests %}
+                <p class="text-muted small">You haven't requested anything yet.</p>
+            {% else %}
+                <div style="max-height: 450px; overflow-y: auto; overflow-x: hidden;" class="pe-1">
+                <ul class="list-group list-group-flush">
+                {% for req in outgoing_requests %}
+                    <li class="list-group-item bg-transparent border-bottom border-light px-0 py-3">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <h6 class="mb-0 fw-bold">{{ req.resource.title if req.resource else 'Deleted Resource' }}</h6>
+                                <small class="text-muted">Status: 
+                                    {% if req.status == 'Pending' and (not req.resource or req.resource.status != 'Available') %}
+                                        <span class="badge bg-secondary">Item Unavailable</span>
+                                    {% else %}
+                                        <span class="badge bg-{{ 'warning' if req.status == 'Pending' else 'success' if req.status in ['Accepted', 'Fulfilled'] else 'danger' }}">{{ req.status }}</span>
+                                    {% endif %}
+                                </small>
+                            </div>
+                            <div class="d-flex gap-2">
+                                {% if req.status in ['Accepted', 'Fulfilled'] and req.resource %}
+                                    <button class="btn btn-sm btn-outline-primary chat-btn align-self-center" data-req-id="{{ req.id }}" data-title="{{ req.resource.title }}">Chat</button>
+                                {% endif %}
+                                {% if req.status == 'Fulfilled' %}
+                                    {% if req.history and not req.history.donor_rating %}
+                                        <form method="POST" action="{{ url_for('request_routes.rate_exchange', history_id=req.history.id) }}" class="d-flex align-items-center gap-2">
+                                            <select name="rating" class="form-select form-select-sm" style="width: auto;" required>
+                                                <option value="" disabled selected>Rate</option>
+                                                <option value="5">5 ★</option>
+                                                <option value="4">4 ★</option>
+                                                <option value="3">3 ★</option>
+                                                <option value="2">2 ★</option>
+                                                <option value="1">1 ★</option>
+                                            </select>
+                                            <button class="btn btn-sm btn-warning">Rate Donor</button>
+                                        </form>
+                                    {% elif req.history and req.history.donor_rating %}
+                                        <span class="text-warning small fw-bold">Rated: {{ req.history.donor_rating }} ★</span>
+                                    {% endif %}
+                                    
+                                    {% if req.history and not req.history.receipt_photo %}
+                                        <button class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#uploadImpactModal{{ req.history.id }}">Upload Impact</button>
+                                        
+                                        <!-- Upload Impact Modal -->
+                                        <div class="modal fade" id="uploadImpactModal{{ req.history.id }}" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content border-0 shadow-lg">
+                                                    <div class="modal-header border-0 pb-0">
+                                                        <h5 class="modal-title fw-bold">Upload Impact Proof</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <form method="POST" action="{{ url_for('history_routes.upload_impact', history_id=req.history.id) }}" enctype="multipart/form-data">
+                                                        <div class="modal-body text-start">
+                                                            <p class="text-muted small">Show your appreciation and let the community see how this donation helped!</p>
+                                                            <div class="mb-3">
+                                                                <label class="form-label fw-bold">Receipt Photo <span class="text-danger">*</span></label>
+                                                                <input type="file" name="receipt_photo" class="form-control" accept="image/*" required>
+                                                                <div class="form-text">Proof you received the item.</div>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label fw-bold">Usage/Impact Photo (Optional)</label>
+                                                                <input type="file" name="usage_photo" class="form-control" accept="image/*">
+                                                                <div class="form-text">Show the item being used for its intended purpose.</div>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label fw-bold">Message to Donor (Optional)</label>
+                                                                <textarea name="impact_message" class="form-control" rows="3" placeholder="Thank you so much!"></textarea>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer border-0">
+                                                            <button type="submit" class="btn btn-secondary w-100 rounded-pill">Submit Impact</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% elif req.history and req.history.receipt_photo %}
+                                        <span class="badge bg-soft-success text-success">Impact Uploaded ✓</span>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </li>
+                {% endfor %}
+                </ul>
+                </div>
+            {% endif %}
+        </div>
 
     </div>
 </div>
@@ -405,6 +607,10 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.modal').forEach(modal => {
+        document.body.appendChild(modal);
+    });
+
     const deleteButtons = document.querySelectorAll('.delete-listing-btn');
     
     deleteButtons.forEach(btn => {
