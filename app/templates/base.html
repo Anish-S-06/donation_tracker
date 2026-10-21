@@ -18,6 +18,13 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     {% block extra_css %}{% endblock %}
     
+    <!-- PWA & Mobile Web Capabilities -->
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="theme-color" content="#1e3a8a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/logo.png') }}">
+
     <!-- Dark Mode Init Script (Prevents flash of unstyled content) -->
     <script>
         const savedTheme = localStorage.getItem('theme');
@@ -25,6 +32,14 @@
             document.documentElement.setAttribute('data-bs-theme', savedTheme);
         } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
             document.documentElement.setAttribute('data-bs-theme', 'dark');
+        }
+
+        // Service Worker Registration for PWA support
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register("{{ url_for('static', filename='sw.js') }}")
+                    .catch(err => console.log('SW registration failed:', err));
+            });
         }
     </script>
 </head>

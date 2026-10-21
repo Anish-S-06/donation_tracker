@@ -370,10 +370,17 @@
 <!-- Leaflet JS for Map -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
-    // --- Resource Creation Logic (Moved from index.html) ---
+    // --- Resource Creation Logic ---
     document.getElementById('resourceForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalBtnHtml = submitBtn ? submitBtn.innerHTML : 'Add Listing';
+        if(submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Listing...';
+        }
+
         const donorId = document.getElementById('donor_id').value;
         const title = document.getElementById('title').value;
         const description = document.getElementById('description').value;
@@ -390,9 +397,9 @@
         formData.append('description', description);
         formData.append('category', category);
         formData.append('condition', condition);
-        if(lat) formData.append('location_lat', lat);
-        if(lng) formData.append('location_lng', lng);
-        if(address) formData.append('address', address);
+        if(lat && lat.trim() !== '') formData.append('location_lat', lat.trim());
+        if(lng && lng.trim() !== '') formData.append('location_lng', lng.trim());
+        if(address && address.trim() !== '') formData.append('address', address.trim());
         const reqIncome = document.getElementById('requiresIncomeProof');
         formData.append('requires_income_proof', (reqIncome && reqIncome.checked) ? 'true' : 'false');
         if(imageFile) {
@@ -404,17 +411,45 @@
                 method: 'POST',
                 body: formData
             });
-            const data = await res.json();
+            
+            let data = {};
+            try {
+                data = await res.json();
+            } catch(jsonErr) {
+                const text = await res.text();
+                data = { error: text || 'Server returned status ' + res.status };
+            }
             
             if(res.ok) {
-                Toastify({ text: "Resource listed successfully!", backgroundColor: "#10b981" }).showToast();
-                setTimeout(() => window.location.reload(), 1500);
+                if(typeof Toastify !== 'undefined') {
+                    Toastify({ text: "Resource listed successfully!", backgroundColor: "#10b981", duration: 3000 }).showToast();
+                } else {
+                    alert("Resource listed successfully!");
+                }
+                setTimeout(() => window.location.reload(), 1200);
             } else {
-                Toastify({ text: "Error: " + data.error, backgroundColor: "#ef4444" }).showToast();
+                const errorMsg = data.error || ("Failed to create resource (Error " + res.status + ")");
+                if(typeof Toastify !== 'undefined') {
+                    Toastify({ text: "Error: " + errorMsg, backgroundColor: "#ef4444", duration: 5000 }).showToast();
+                } else {
+                    alert("Error: " + errorMsg);
+                }
+                if(submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnHtml;
+                }
             }
         } catch(err) {
-            console.error(err);
-            Toastify({ text: "Failed to create resource", backgroundColor: "#ef4444" }).showToast();
+            console.error("Resource creation error:", err);
+            if(typeof Toastify !== 'undefined') {
+                Toastify({ text: "Network error: " + err.message, backgroundColor: "#ef4444", duration: 5000 }).showToast();
+            } else {
+                alert("Network error: " + err.message);
+            }
+            if(submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnHtml;
+            }
         }
     });
 

@@ -1,0 +1,18 @@
+{
+  "name": "Seva Sankalp - Community Donation Platform",
+  "short_name": "Seva Sankalp",
+  "description": "Connecting Generous Donors with Verified NGOs & Beneficiaries",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#1e3a8a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/static/images/logo.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

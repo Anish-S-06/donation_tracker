@@ -7,7 +7,7 @@ import os
 from werkzeug.utils import secure_filename
 from PIL import Image
 
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'jfif'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -36,12 +36,13 @@ def get_resources():
     } for r in resources]
     return jsonify(result), 200
 
+@resource_bp.route('', methods=['POST'])
 @resource_bp.route('/', methods=['POST'])
 def create_resource():
     if request.is_json:
-        data = request.json
+        data = request.json or {}
     else:
-        data = request.form
+        data = request.form or {}
 
     if not current_user.is_authenticated:
         return jsonify({'error': 'Login required'}), 401
@@ -51,11 +52,24 @@ def create_resource():
     if not donor:
         return jsonify({'error': 'Donor not found'}), 404
 
-    if donor.is_ngo:
-        return jsonify({'error': 'NGOs cannot post resources'}), 403
+    if not donor.is_email_verified and donor.role != 'admin':
+        if not current_app.config.get("MAIL_USERNAME"):
+            donor.is_email_verified = True
+            db.session.commit()
+        else:
+            return jsonify({'error': 'Please verify your email via OTP to list resources.'}), 403
 
-    if not donor.is_email_verified:
-        return jsonify({'error': 'Email not verified'}), 403
+    title = (data.get('title') or '').strip()
+    description = (data.get('description') or '').strip()
+    category = (data.get('category') or 'Other').strip()
+    condition = (data.get('condition') or 'Good').strip()
+
+    if not title:
+        return jsonify({'error': 'Title is required'}), 400
+    if not description:
+        return jsonify({'error': 'Description is required'}), 400
+    if condition not in ['New', 'Like New', 'Good', 'Fair']:
+        condition = 'Good'
 
     image_path = None
     if 'image' in request.files:
@@ -65,13 +79,12 @@ def create_resource():
             os.makedirs(upload_folder, exist_ok=True)
             
             ext = file.filename.rsplit('.', 1)[1].lower()
-            import time
-            filename = secure_filename(f"res_{donor.id}_{int(time.time())}.{ext}")
+            import time, uuid
+            filename = secure_filename(f"res_{donor.id}_{int(time.time())}_{uuid.uuid4().hex[:6]}.{ext}")
             filepath = os.path.join(upload_folder, filename)
             
             try:
                 image = Image.open(file)
-                # Ensure RGBA is converted to RGB if saving as JPEG
                 if image.mode in ('RGBA', 'P') and ext in ['jpg', 'jpeg']:
                     image = image.convert('RGB')
                 image.thumbnail((800, 800))
@@ -79,32 +92,57 @@ def create_resource():
                 if ext in ['jpg', 'jpeg']:
                     image.save(filepath, 'JPEG', optimize=True, quality=80)
                 else:
-                    image.save(filepath, optimize=True)
+                    image.save(filepath)
                     
                 image_path = f"uploads/resources/{filename}"
             except Exception as e:
-                db.session.rollback()
-                return jsonify({'error': str(e)}), 500
+                try:
+                    file.seek(0)
+                    file.save(filepath)
+                    image_path = f"uploads/resources/{filename}"
+                except Exception as save_err:
+                    current_app.logger.warning(f"Image processing fallback failed: {save_err}")
 
     requires_income = data.get('requires_income_proof') in [True, 'true', '1', 1]
 
+    lat_val = data.get('location_lat')
+    lng_val = data.get('location_lng')
+    location_lat = None
+    location_lng = None
+    if lat_val and str(lat_val).strip() not in ('', 'null', 'undefined', 'None'):
+        try:
+            location_lat = float(lat_val)
+        except (ValueError, TypeError):
+            location_lat = None
+
+    if lng_val and str(lng_val).strip() not in ('', 'null', 'undefined', 'None'):
+        try:
+            location_lng = float(lng_val)
+        except (ValueError, TypeError):
+            location_lng = None
+
     new_resource = Resource(
         donor_id=donor.id,
-        title=data.get('title'),
-        description=data.get('description'),
-        category=data.get('category'),
-        condition=data.get('condition'),
-        address=data.get('address'),
-        location_lat=data.get('location_lat'),
-        location_lng=data.get('location_lng'),
+        title=title,
+        description=description,
+        category=category,
+        condition=condition,
+        address=data.get('address') or None,
+        location_lat=location_lat,
+        location_lng=location_lng,
         image=image_path,
         requires_income_proof=requires_income
     )
 
-    db.session.add(new_resource)
-    db.session.commit()
+    try:
+        db.session.add(new_resource)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error creating resource: {e}")
+        return jsonify({'error': f'Database error: {str(e)}'}), 500
 
-    return jsonify({'message': 'Resource created'}), 201
+    return jsonify({'message': 'Resource created successfully', 'id': new_resource.id}), 201
 @resource_bp.route('/<int:resource_id>', methods=['GET'])
 def get_resource(resource_id):
     resource = Resource.query.get_or_404(resource_id)
@@ -174,18 +212,15 @@ def delete_resource(resource_id):
     return jsonify({'message': f'Resource {resource_id} deleted successfully'}), 200
 
 @resource_bp.route('/my_resources', methods=['GET'])
+@resource_bp.route('/my-resources', methods=['GET'])
 @login_required
 def my_resources():
+    resources = Resource.query.filter_by(donor_id=current_user.id).order_by(Resource.created_at.desc()).all()
+    resource_ids = [r.id for r in resources]
     incoming_requests = []
-    outgoing_requests = []
-    resources = []
-    
-    if current_user.role == 'user':
-        resources = Resource.query.filter_by(donor_id=current_user.id).all()
-        resource_ids = [r.id for r in resources]
-        if resource_ids:
-            incoming_requests = DonationRequest.query.filter(DonationRequest.resource_id.in_(resource_ids)).order_by(DonationRequest.created_at.desc()).all()
-            
-        outgoing_requests = DonationRequest.query.filter_by(receiver_id=current_user.id).order_by(DonationRequest.created_at.desc()).all()
+    if resource_ids:
+        incoming_requests = DonationRequest.query.filter(DonationRequest.resource_id.in_(resource_ids)).order_by(DonationRequest.created_at.desc()).all()
+        
+    outgoing_requests = DonationRequest.query.filter_by(receiver_id=current_user.id).order_by(DonationRequest.created_at.desc()).all()
 
     return render_template('my_resources.html', resources=resources, incoming_requests=incoming_requests, outgoing_requests=outgoing_requests)

@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Seva Sankalp</string>
+    
+    <!-- Production Flask Server URL on PythonAnywhere -->
+    <!-- You can update this string at any time to point to your domain -->
+    <string name="server_url">https://anishs06.pythonanywhere.com</string>
+    
+    <string name="offline_title">No Internet Connection</string>
+    <string name="offline_message">Unable to connect to Seva Sankalp server. Please check your data connection or Wi-Fi and tap retry.</string>
+    <string name="retry">Retry Connection</string>
+    <string name="exit_prompt">Press back again to exit Seva Sankalp</string>
+</resources>
